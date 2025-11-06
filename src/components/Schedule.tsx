@@ -1,8 +1,7 @@
 import React, { useState, useMemo, FormEvent } from 'react';
 import { 
   Calendar as CalendarIcon, 
-  Clock, 
-  Plus, 
+  Plus,
   Filter, 
   Search, 
   ChevronLeft, 

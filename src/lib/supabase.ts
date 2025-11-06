@@ -19,10 +19,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 
 export interface Usuario {
+
   id: string;
   email: string;
   nome: string;
-  nome_studio: string;
+  nome_do_negocio: string;
   telefone?: string;
   endereco?: string;
   slug: string;
@@ -33,6 +34,7 @@ export interface Usuario {
   configuracoes: Record<string, any>;
   created_at: string;
   updated_at: string;
+  has_completed_onboarding: boolean;
 }
 
 export interface Profissional {
