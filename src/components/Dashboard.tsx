@@ -8,13 +8,15 @@ import {
     TrendingUp,
     CheckCircle,
     Settings as SettingsIcon,
-    Plus // <<< 1. Importei o ícone 'Plus'
+    Plus, // <<< 1. Importei o ícone 'Plus'
+    Copy,
+    ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
     const { appointments, clients, services } = useData();
-    const { user, resendConfirmationEmail } = useAuth();
+    const { user, usuario, resendConfirmationEmail } = useAuth();
     const navigate = useNavigate();
     const [isResending, setIsResending] = useState(false);
     const [resendMessage, setResendMessage] = useState('');
@@ -86,6 +88,12 @@ export default function Dashboard() {
         </button>
     );
 
+    // --- <<< 3. URL COMPLETA E FUNÇÃO DE COPIAR ---
+    const fullPublicUrl = `https://agend-pro.vercel.app/booking/${usuario?.slug || ''}`;
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(fullPublicUrl);
+        alert('Link copiado para a área de transferência!');
+    };
 
     // --- Início do Layout Otimizado ---
     return (
@@ -105,7 +113,38 @@ export default function Dashboard() {
                 <p className="text-gray-600 text-sm md:text-base">Visão geral do seu negócio em tempo real</p>
             </div>
 
-            {/* --- <<< INÍCIO DA REORDENAÇÃO --- */}
+            {/* --- <<< 4. NOVO CARD DE COMPARTILHAMENTO --- */}
+            <div className="mb-6 md:mb-8">
+                <div className="p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+                    <h3 className="font-semibold text-gray-900 mb-2">Seu Link de Agendamento</h3>
+                    <p className="text-sm text-gray-600 mb-3">Este é o link para compartilhar com seus clientes.</p>
+                    <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 p-3 bg-gray-50 rounded-lg border">
+                        <input
+                            type="text"
+                            value={fullPublicUrl}
+                            readOnly
+                            className="flex-1 w-full sm:w-auto bg-transparent text-sm text-gray-600 focus:outline-none"
+                        />
+                        <button
+                            onClick={copyToClipboard}
+                            className="flex items-center justify-center w-full sm:w-auto px-3 py-2 text-sm font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200"
+                        >
+                            <Copy size={16} className="mr-2"/>
+                            Copiar
+                        </button>
+                        <a
+                            href={fullPublicUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-full sm:w-auto px-3 py-2 text-sm font-medium text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
+                        >
+                            <ExternalLink size={16} className="mr-2"/>
+                            Abrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {/* --- FIM DO NOVO CARD --- */}
 
             {/* 1. AGENDAMENTOS DE HOJE (MOVIDO PARA O TOPO) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 md:mb-8">
