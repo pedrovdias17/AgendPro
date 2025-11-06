@@ -353,16 +353,16 @@ export default function Schedule() {
                 <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-semibold text-gray-900">Novo Agendamento Manual</h2><button onClick={() => setIsModalOpen(false)} className="p-1 rounded-full text-gray-400 hover:bg-gray-100"><X size={20} /></button></div>
                 <h3 className="text-md font-medium text-gray-800 border-b pb-2">Dados do Cliente</h3>
                 <div><label className="block text-sm font-medium text-gray-700 mb-2">Nome do Cliente *</label><input type="text" name="clientName" required value={formData.clientName} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
-                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Telefone *</label><input type="tel" name="clientPhone" required value={formData.clientPhone} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Email</label><input type="email" name="clientEmail" value={formData.clientEmail} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
                 </div>
                 <h3 className="text-md font-medium text-gray-800 border-b pb-2 pt-4">Dados do Serviço</h3>
-                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Serviço *</label><select name="servico_id" required value={formData.servico_id} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="">Selecione um serviço</option>{services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Profissional *</label><select name="profissional_id" required value={formData.profissional_id} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50" disabled><option value="">Selecione um serviço</option>{professionals.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Data *</label><input type="date" name="data_agendamento" required value={formData.data_agendamento} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Hora *</label><input type="time" name="hora_agendamento" required value={formData.hora_agendamento} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
                 </div>
