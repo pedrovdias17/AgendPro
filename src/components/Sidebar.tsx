@@ -67,9 +67,11 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
                 <div className={`flex items-center space-x-3 ${!isOpen && 'justify-center'}`}>
-                    <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center">
-                        <Scissors size={16} />
-                    </div>
+                    <img
+                        src="/logo.svg"
+                        alt="Logo AgendPro"
+                        className="w-24 h-16"
+                    />
                     {isOpen && (
                         <div>
                             <h1 className="font-bold text-gray-900">AgendPro</h1>
