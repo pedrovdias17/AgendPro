@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
-import { useAuth } from '../contexts/AuthContext'; // 1. Importar o useAuth
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Calendar, 
   DollarSign, 
@@ -9,18 +9,18 @@ import {
   Clock,
   CheckCircle,
   Settings as SettingsIcon,
-  AlertTriangle // 2. Importar o ícone de alerta
+  AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const { appointments, clients, services } = useData();
-  const { user, resendConfirmationEmail } = useAuth(); // 3. Pegar o 'user' e a nova função do AuthContext
+  const { user, resendConfirmationEmail } = useAuth();
   const navigate = useNavigate();
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
 
-  // --- LÓGICA DE CÁLCULO DAS MÉTRICAS ---
+  // --- LÓGICA DE CÁLCULO DAS MÉTRICAS (sem alterações) ---
   const now = new Date();
   const todayISO = now.toISOString().split('T')[0];
   const currentYear = now.getFullYear();
@@ -51,7 +51,6 @@ export default function Dashboard() {
     ? Math.round((completedAppointmentsThisMonth.length / relevantAppointmentsThisMonth.length) * 100)
     : 0;
 
-  // 4. NOVA FUNÇÃO PARA REENVIAR O EMAIL
   const handleResendEmail = async () => {
     if (!user?.email) return;
     setIsResending(true);
@@ -65,7 +64,7 @@ export default function Dashboard() {
     setIsResending(false);
   };
   
-  // --- COMPONENTES VISUAIS ---
+  // --- COMPONENTES VISUAIS (sem alterações na estrutura interna) ---
   const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: string | number, icon: React.ElementType, color: string }) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <div className="flex items-center justify-between">
@@ -89,8 +88,9 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-6">
-      {/* 5. NOVO BANNER CONDICIONAL */}
+    // Ajuste no padding geral para telas pequenas
+    <div className="p-4 md:p-6"> 
+      {/* Banner de Confirmação (sem alterações) */}
       {user && !user.email_confirmed_at && (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
           <div className="flex">
@@ -110,44 +110,52 @@ export default function Dashboard() {
       )}
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Painel Administrativo</h1>
-        <p className="text-gray-600">Visão geral do seu negócio em tempo real</p>
+      <div className="mb-6 md:mb-8">
+        {/* Ajuste no tamanho da fonte para mobile */}
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Painel Administrativo</h1>
+        <p className="text-gray-600 text-sm md:text-base">Visão geral do seu negócio em tempo real</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* --- Stats Grid (AJUSTE PRINCIPAL AQUI) --- */}
+      {/* Começa com 1 coluna, muda para 2 em telas 'sm' e para 4 em telas 'lg' */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         <StatCard title="Agendamentos Hoje" value={todayAppointments.length} icon={Calendar} color="blue" />
         <StatCard title="Concluídos (mês)" value={completedAppointmentsThisMonth.length} icon={CheckCircle} color="green" />
         <StatCard title="Faturamento (mês)" value={`R$ ${totalRevenueThisMonth.toFixed(2).replace('.', ',')}`} icon={DollarSign} color="purple" />
         <StatCard title="Taxa de Conclusão" value={`${completionRateThisMonth}%`} icon={TrendingUp} color="orange" />
       </div>
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
+      {/* --- Content Grid (AJUSTE PRINCIPAL AQUI) --- */}
+      {/* Começa com 1 coluna, muda para 3 colunas em telas 'lg' */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        {/* Coluna da Esquerda: Ações */}
+        {/* Ocupa 1 coluna no mobile, continua 1 coluna no desktop (lg:col-span-1) */}
+        <div className="lg:col-span-1 space-y-4 md:space-y-6">
           <ActionCard title="Ver Agenda" subtitle="Visualize e gerencie agendamentos" icon={Calendar} color="blue" path="/schedule" />
           <ActionCard title="Clientes" subtitle="Gerencie sua base de clientes" icon={Users} color="purple" path="/clients" />
           <ActionCard title="Configurações" subtitle="Ajuste seu perfil e negócio" icon={SettingsIcon} color="gray" path="/settings" />
         </div>
 
+        {/* Coluna da Direita: Agendamentos de Hoje */}
+        {/* Ocupa 1 coluna no mobile, expande para 2 colunas no desktop (lg:col-span-2) */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          <div className="p-4 md:p-6 border-b border-gray-100 flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Agendamentos de Hoje</h2>
-              <p className="text-sm text-gray-600 mt-1">
+              {/* Ajuste no tamanho da fonte para mobile */}
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Agendamentos de Hoje</h2>
+              <p className="text-xs md:text-sm text-gray-600 mt-1">
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
               </p>
             </div>
-            <button onClick={() => navigate('/schedule')} className="text-sm text-blue-600 font-medium hover:text-blue-700">
+            <button onClick={() => navigate('/schedule')} className="text-xs md:text-sm text-blue-600 font-medium hover:text-blue-700">
               Ver todos
             </button>
           </div>
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             {todayAppointments.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar size={48} className="text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Nenhum agendamento para hoje. Aproveite o dia!</p>
+                <p className="text-gray-500 text-sm md:text-base">Nenhum agendamento para hoje. Aproveite o dia!</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -157,17 +165,18 @@ export default function Dashboard() {
                   .map((appointment) => {
                     const client = clients.find(c => c.id === appointment.cliente_id);
                     return (
-                      <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      // Ajuste no layout interno do card de agendamento para mobile
+                      <div key={appointment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg gap-2">
                         <div className="flex items-center space-x-3">
-                          <div className="flex-shrink-0 text-gray-600">
+                          <div className="flex-shrink-0 text-gray-600 hidden sm:block"> {/* Esconde ícone no mobile */}
                             <Clock size={20} />
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{client?.nome || 'Cliente não encontrado'}</p>
-                            <p className="text-sm text-gray-600">{appointment.hora_agendamento}</p>
+                            <p className="font-medium text-gray-900 text-sm sm:text-base">{client?.nome || 'Cliente não encontrado'}</p>
+                            <p className="text-xs sm:text-sm text-gray-600">{appointment.hora_agendamento}</p>
                           </div>
                         </div>
-                        <div className="text-lg font-semibold text-gray-900">
+                        <div className="text-base sm:text-lg font-semibold text-gray-900 mt-1 sm:mt-0 self-end sm:self-center"> {/* Alinha à direita no mobile */}
                           R$ {(appointment.valor_total || 0).toFixed(2).replace('.', ',')}
                         </div>
                       </div>

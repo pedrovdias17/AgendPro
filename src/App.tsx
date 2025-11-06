@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Componentes do Dono do Negócio
@@ -12,11 +12,10 @@ import Settings from './components/Settings';
 import Upgrade from './components/Upgrade';
 import Legal from './components/Legal';
 import Sidebar from './components/Sidebar';
-import SubscriptionGuard from './components/SubscriptionGuard'; 
+import SubscriptionGuard from './components/SubscriptionGuard';
+import OnboardingWizard from './components/OnboardingWizard';
 
 // Páginas Públicas e da Área do Cliente
-import Appointments from './pages/Appointments';
-import AppointmentDetails from './pages/AppointmentDetails';
 import PublicBooking from './pages/PublicBooking';
 import PaymentSuccess from './pages/PaymentSuccess'; // 1. NOVA IMPORTAÇÃO
 import PaymentCancel from './pages/PaymentCancel';   // 1. NOVA IMPORTAÇÃO
@@ -27,7 +26,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 
 function AdminArea() {
-  const { user } = useAuth();
+  const { user, usuario } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   if (user === undefined) {
@@ -42,6 +41,21 @@ function AdminArea() {
     return <Login />;
   }
 
+    // 'user' existe (logado), mas o 'usuario' (perfil do banco) AINDA não foi carregado
+    // (O 'usuario' começa como 'null' no AuthContext)
+    if (user && usuario === null) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                Carregando perfil...
+            </div>
+        );
+    }
+
+    // 'user' existe, 'usuario' (perfil) existe, e a flag de onboarding é 'false'
+    if (user && usuario && usuario.has_completed_onboarding === false) {
+        // Mostra APENAS o wizard em tela cheia
+        return <OnboardingWizard />;
+    }
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
