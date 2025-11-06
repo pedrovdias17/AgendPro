@@ -176,7 +176,7 @@ export default function Services() {
                   {professionals.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium text-gray-700 mb-2">Duração (min) *</label><input type="number" required min="15" step="15" value={formData.duration} onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
                 <div><label className="block text-sm font-medium text-gray-700 mb-2">Preço (R$) *</label><input type="number" required min="0" step="0.01" value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
               </div>
