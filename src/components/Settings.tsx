@@ -1,6 +1,5 @@
 import React, { useState, useEffect, FormEvent } from 'react';
-import { 
-  Settings as SettingsIcon, 
+import {
   User, 
   CreditCard, 
   Clock, 
@@ -11,12 +10,10 @@ import {
   Plus,
   Trash2,
   FileText,
-  Eye,
-  EyeOff
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase'; // Importação necessária
-import { Usuario } from '../lib/supabase';
 
 function FormMessage({ type, text }: { type: 'success' | 'error', text: string }) {
   const baseClasses = "text-sm p-3 rounded-lg my-4";
@@ -60,7 +57,7 @@ export default function Settings() {
     if (usuario) {
       setSettings(prev => ({
         ...prev,
-        studioName: usuario.nome_studio || '',
+        studioName: usuario.nome_do_negocio || '',
         ownerName: usuario.nome || '',
         email: usuario.email || '',
         phone: usuario.telefone || '',
@@ -253,7 +250,25 @@ export default function Settings() {
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Email</label><input type="email" value={settings.email} disabled className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"/></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label><input type="tel" value={settings.phone} onChange={(e) => setSettings(prev => ({ ...prev, phone: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
                   <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-2">Endereço</label><input type="text" value={settings.address} onChange={(e) => setSettings(prev => ({ ...prev, address: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/></div>
-                  <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-2">URL Personalizada</label><div className="flex items-center"><span className="px-4 py-2 bg-gray-100 border-t border-b border-l border-gray-300 rounded-l-lg text-gray-600">agend-pro.vercel.app/booking/</span><input type="text" value={settings.customUrl} onChange={(e) => setSettings(prev => ({ ...prev, customUrl: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-r-lg"/></div></div>
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">URL Personalizada</label>
+                        {/* MUDANÇA: 'flex-col md:flex-row' empilha no mobile e alinha no desktop.
+                      Também ajustei os cantos arredondados para se adaptarem.
+                    */}
+                        <div className="flex flex-col md:flex-row">
+                      <span className="px-4 py-2 bg-gray-100 border border-gray-300 text-gray-600
+                                     rounded-t-lg md:rounded-l-lg md:rounded-t-none md:border-r-0">
+                        agend-pro.vercel.app/booking/
+                      </span>
+                            <input
+                                type="text"
+                                value={settings.customUrl}
+                                onChange={(e) => setSettings(prev => ({ ...prev, customUrl: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                                className="w-full px-4 py-2 border border-gray-300
+                                   rounded-b-lg md:rounded-r-lg md:rounded-b-none"
+                            />
+                        </div>
+                    </div>
                 </div>
               </div>
             )}
@@ -300,13 +315,21 @@ export default function Settings() {
               </div>
             )}
 
-            {activeTab === 'payments' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Configurações de Pagamento</h2>
-                <div className="mb-6"><label className="block text-sm font-medium text-gray-700 mb-2">Chave de API do Mercado Pago (Access Token)</label><div className="relative"><input type={isKeyVisible ? 'text' : 'password'} value={settings.paymentKey} onChange={(e) => setSettings(prev => ({ ...prev, paymentKey: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg pr-10" placeholder="Cole seu Access Token de Produção aqui"/><button type="button" onClick={() => setIsKeyVisible(!isKeyVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700">{isKeyVisible ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></div>
-                <div className="p-4 bg-yellow-50 rounded-lg"><h3 className="font-medium text-yellow-900 mb-2">Como configurar:</h3><ol className="text-sm text-yellow-800 space-y-1 list-decimal list-inside"><li>Acesse sua conta do Mercado Pago.</li><li>Vá em "Seu negócio" → "Configurações" → "Gestão e Administração" → "Credenciais".</li><li>Na seção "Credenciais de produção", clique em "Ativar credenciais".</li><li>Copie sua chave de acesso chamada **"Access Token"**.</li><li>Cole a chave no campo acima.</li></ol></div>
-              </div>
-            )}
+              {activeTab === 'payments' && (
+                  <div>
+                      <h2 className="text-xl font-semibold text-gray-900 mb-6">Configurações de Pagamento</h2>
+                      {/* --- NOVO BANNER "EM BREVE" --- */}
+                      <div className="flex flex-col items-center justify-center text-center p-10 bg-gray-50 rounded-lg h-[450px]">
+                          <div className="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full inline-block mb-4">
+                              <Sparkles size={32} className="text-white" />
+                          </div>
+                          <h3 className="text-xl font-semibold text-gray-900 mb-2">Pix Automático e Mais em Breve</h3>
+                          <p className="text-gray-600 max-w-md">
+                              Estamos trabalhando em integrações de pagamento robustas, incluindo Pix automático, para facilitar ainda mais o seu dia a dia e dos seus clientes.
+                          </p>
+                      </div>
+                  </div>
+              )}
             
             {activeTab === 'public' && (
               <div>

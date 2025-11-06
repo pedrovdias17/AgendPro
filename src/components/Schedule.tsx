@@ -214,7 +214,7 @@ export default function Schedule() {
             <Search size={20} className="text-gray-400" />
             <input type="text" placeholder="Buscar por cliente ou telefone..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <div className="flex items-center space-x-2">
               <User size={20} className="text-gray-400" />
               <select value={filterProfessional} onChange={(e) => setFilterProfessional(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg">
