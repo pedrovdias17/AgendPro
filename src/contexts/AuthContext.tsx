@@ -23,15 +23,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [session, setSession] = useState<Session | null>(null);
 
-  const loadUserProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase.from('usuarios').select('*').eq('id', userId).single();
-      if (error) console.error('Erro ao carregar perfil:', error);
-      else setUsuario(data);
-    } catch (error) {
+const loadUserProfile = useCallback(async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle(); // <--- A MUDANÇA É AQUI
+
+    if (error) {
       console.error('Erro ao carregar perfil:', error);
+      return;
     }
-  }, []);
+
+    // Se data for null, significa que o usuário é novo e precisa de Onboarding
+    setUsuario(data); 
+
+  } catch (error) {
+    console.error('Erro ao carregar perfil:', error);
+  }
+}, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

@@ -15,7 +15,7 @@ import Legal from './components/Legal';
 import Sidebar from './components/Sidebar';
 import SubscriptionGuard from './components/SubscriptionGuard';
 import OnboardingWizard from './components/OnboardingWizard';
-import MobileHeader from './components/MobileHeader'; // <<< 1. IMPORTAR NOVO HEADER
+import MobileHeader from './components/MobileHeader'; 
 
 // Páginas Públicas e da Área do Cliente
 import PublicBooking from './pages/PublicBooking';
