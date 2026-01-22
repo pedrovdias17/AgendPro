@@ -8,7 +8,7 @@ import {
     TrendingUp,
     CheckCircle,
     Settings as SettingsIcon,
-    Plus, // <<< 1. Importei o ícone 'Plus'
+    Plus, 
     Copy,
     ExternalLink
 } from 'lucide-react';
