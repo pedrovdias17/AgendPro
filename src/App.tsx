@@ -1,8 +1,8 @@
-// Copie e cole o conteúdo inteiro em: App.tsx
-import { useState } from 'react';
+import {useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Componentes do Dono do Negócio
+import { initOneSignal } from "./lib/onesignal";
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Professionals from './components/Professionals';
@@ -27,11 +27,11 @@ import ClientArea from './pages/ClientArea';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 
+
 function AdminArea() {
     const { user, usuario } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // --- (Lógica de 'Carregando...', 'Login', 'Onboarding' sem alteração) ---
     if (user === undefined) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -96,8 +96,15 @@ function AdminArea() {
     );
 }
 
+
+
 // --- (Resto do App.tsx sem alteração) ---
 function App() {
+
+        useEffect(() => {
+  initOneSignal();
+}, []);
+
     return (
         <AuthProvider>
             <DataProvider>

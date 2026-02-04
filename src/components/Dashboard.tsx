@@ -237,7 +237,6 @@ export default function Dashboard() {
             >
                 <Plus size={28} />
             </button>
-
         </div>
     );
 }
