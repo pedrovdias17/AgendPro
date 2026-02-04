@@ -2,7 +2,7 @@ import {useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Componentes do Dono do Negócio
-import { initOneSignal } from "./lib/onesignal";
+import { initOneSignal } from "./lib/onesignal"; 
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Professionals from './components/Professionals';
