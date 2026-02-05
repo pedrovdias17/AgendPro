@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, User, Mail, Phone, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, User, Mail, Phone, X, MoreVertical } from 'lucide-react';
 import { useData, Professional } from '../contexts/DataContext';
 
 export default function Professionals() {
@@ -46,134 +46,161 @@ export default function Professionals() {
   };
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-6 pb-24">
+      {/* Header Otimizado */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Profissionais</h1>
-          <p className="text-gray-600">Gerencie sua equipe de profissionais</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Profissionais</h1>
+          <p className="text-sm md:text-base text-gray-600">Gerencie sua equipe de atendimento</p>
         </div>
         <button
           onClick={() => {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          className="w-full sm:w-auto bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center justify-center space-x-2 shadow-sm active:scale-95"
         >
           <Plus size={20} />
-          <span>Adicionar Profissional</span>
+          <span>Novo Profissional</span>
         </button>
       </div>
 
-      {/* Tabela de Profissionais */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-500">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3">Profissional</th>
-                <th scope="col" className="px-6 py-3">Contato</th>
-                <th scope="col" className="px-6 py-3 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {professionals.map((professional) => (
-                <tr key={professional.id} className="bg-white border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-                        <User size={18} />
-                      </div>
-                      <span>{professional.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-1">
-                      <Mail size={14} className="text-gray-400" />
-                      <span>{professional.email}</span>
-                    </div>
-                    <div className="flex items-center space-x-1 mt-1">
-                      <Phone size={14} className="text-gray-400" />
-                      <span>{professional.phone}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end space-x-2">
-                      <button onClick={() => handleEdit(professional)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(professional.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {professionals.length === 0 && (
-          <div className="text-center py-12">
+      {/* Lista de Profissionais (Cards no Mobile, Tabela no Desktop) */}
+      <div className="space-y-3">
+        {professionals.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-dashed border-gray-300 py-16 text-center">
             <User size={48} className="text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Nenhum profissional cadastrado ainda</p>
-            <button
-              onClick={() => {
-                resetForm();
-                setIsModalOpen(true);
-              }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700"
-            >
-              Adicionar Primeiro Profissional
-            </button>
+            <p className="text-gray-500 font-medium">Nenhum profissional cadastrado</p>
           </div>
+        ) : (
+          professionals.map((professional) => (
+            <div 
+              key={professional.id} 
+              className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-4"
+            >
+              {/* Topo do Card: Info Principal + Ações */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-inner">
+                    <User size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">{professional.name}</h3>
+                    <span className="text-xs font-medium px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">
+                      Profissional Ativo
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Botões de Ação */}
+                <div className="flex items-center space-x-1">
+                  <button 
+                    onClick={() => handleEdit(professional)} 
+                    className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(professional.id)} 
+                    className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Divisor Interno */}
+              <div className="h-px bg-gray-50 w-full" />
+
+              {/* Rodapé do Card: Contatos em Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center text-gray-600 bg-gray-50 p-2 rounded-lg">
+                  <Mail size={16} className="text-blue-500 mr-2 shrink-0" />
+                  <span className="truncate">{professional.email || 'Sem e-mail'}</span>
+                </div>
+                <div className="flex items-center text-gray-600 bg-gray-50 p-2 rounded-lg">
+                  <Phone size={16} className="text-green-500 mr-2 shrink-0" />
+                  <span>{professional.phone || 'Sem telefone'}</span>
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
       
-      {/* Modal com Novo Design */}
+      {/* Modal Otimizado para Mobile (Abre como "Bottom Sheet" visualmente) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-8 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {editingProfessional ? 'Editar Profissional' : 'Adicionar Profissional'}
-              </h2>
-              <button onClick={resetForm} className="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600">
-                <X size={20} />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-[100]">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editingProfessional ? 'Editar Profissional' : 'Novo Profissional'}
+                </h2>
+                <p className="text-sm text-gray-500">Preencha os dados abaixo</p>
+              </div>
+              <button onClick={resetForm} className="p-2 rounded-full text-gray-400 hover:bg-gray-100">
+                <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Nome Completo *</label>
                 <div className="relative">
                   <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="text" required value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" placeholder="Nome do profissional"/>
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.name} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} 
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all" 
+                    placeholder="Nome do profissional"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">E-mail</label>
                 <div className="relative">
                   <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="email" value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" placeholder="email@exemplo.com"/>
+                  <input 
+                    type="email" 
+                    value={formData.email} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} 
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all" 
+                    placeholder="exemplo@email.com"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Telefone / WhatsApp</label>
                 <div className="relative">
                   <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="tel" value={formData.phone} onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" placeholder="(11) 99999-9999"/>
+                  <input 
+                    type="tel" 
+                    value={formData.phone} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} 
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all" 
+                    placeholder="(00) 00000-0000"
+                  />
                 </div>
               </div>
               
-              <div className="flex space-x-4 pt-6">
-                <button type="button" onClick={resetForm} className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button 
+                  type="button" 
+                  onClick={resetForm} 
+                  className="w-full px-4 py-3 text-gray-500 font-semibold hover:bg-gray-50 rounded-xl order-2 sm:order-1"
+                >
                   Cancelar
                 </button>
-                <button type="submit" className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
-                  {editingProfessional ? 'Salvar Alterações' : 'Adicionar'}
+                <button 
+                  type="submit" 
+                  className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 order-1 sm:order-2 active:scale-95 transition-transform"
+                >
+                  {editingProfessional ? 'Salvar Alterações' : 'Cadastrar Equipe'}
                 </button>
               </div>
             </form>
