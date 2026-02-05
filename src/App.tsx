@@ -35,7 +35,8 @@ function AdminArea() {
     useEffect(() => {
         // Só vincula se o perfil do usuário (do seu banco) já estiver carregado
         if (usuario?.id) {
-            loginOneSignal(usuario.id);
+            initOneSignal();
+            loginAndPrompt(usuario.id);
         }
     }, [usuario?.id]);
 
