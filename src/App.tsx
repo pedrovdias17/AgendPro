@@ -106,7 +106,7 @@ function AdminArea() {
 
 
 
-// --- (Resto do App.tsx sem alteração) ---
+
 function App() {
 
         useEffect(() => {
