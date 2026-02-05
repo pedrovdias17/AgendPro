@@ -10,6 +10,8 @@ export function initOneSignal() {
   if (typeof window === "undefined" || oneSignalInitialized) return;
 
   window.OneSignal = window.OneSignal || [];
+  if (!window.OneSignal || oneSignalInitialized) return;
+
   window.OneSignal.push(() => {
     window.OneSignal.init({
       appId: "993668eb-af43-4b96-a7bb-6facdb39c9f5",
@@ -41,5 +43,23 @@ export function loginAndPrompt(userId: string) {
     if (permission !== "granted") {
       window.OneSignal.Slidedown.show();
     }
+  });
+}
+      notifyButton: {
+        enable: true,
+      },
+    });
+
+    oneSignalInitialized = true;
+    console.log("OneSignal inicializado");
+  });
+}
+
+export function loginOneSignal(userId: string) {
+  if (!window.OneSignal || !oneSignalInitialized) return;
+
+  window.OneSignal.push(() => {
+    window.OneSignal.login(userId);
+    console.log("OneSignal login:", userId);
   });
 }
