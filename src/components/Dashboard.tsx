@@ -10,9 +10,11 @@ import {
     Settings as SettingsIcon,
     Plus, 
     Copy,
-    ExternalLink
+    ExternalLink,
+    Bell // Adicionado para o banner de notificação
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { loginAndPrompt } from '../lib/onesignal'; // Importando a função que criamos
 
 export default function Dashboard() {
     const { appointments, clients, services } = useData();
@@ -21,7 +23,7 @@ export default function Dashboard() {
     const [isResending, setIsResending] = useState(false);
     const [resendMessage, setResendMessage] = useState('');
 
-    // --- LÓGICA DE CÁLCULO DAS MÉTRICAS (sem alterações) ---
+    // --- LÓGICA DE CÁLCULO DAS MÉTRICAS ---
     const now = new Date();
     const todayISO = now.toISOString().split('T')[0];
     const currentYear = now.getFullYear();
@@ -65,7 +67,7 @@ export default function Dashboard() {
         setIsResending(false);
     };
 
-    // --- COMPONENTES VISUAIS (sem alterações na estrutura interna) ---
+    // --- COMPONENTES VISUAIS ---
     const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: string | number, icon: React.ElementType, color: string }) => (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
@@ -88,32 +90,55 @@ export default function Dashboard() {
         </button>
     );
 
-    // --- <<< 3. URL COMPLETA E FUNÇÃO DE COPIAR ---
     const fullPublicUrl = `https://agend-pro.vercel.app/booking/${usuario?.slug || ''}`;
     const copyToClipboard = () => {
         navigator.clipboard.writeText(fullPublicUrl);
         alert('Link copiado para a área de transferência!');
     };
 
-    // --- Início do Layout Otimizado ---
     return (
-        // <<< 2. Adicionei 'relative' e 'pb-24' (padding-bottom) para dar espaço para o FAB
         <div className="relative p-4 md:p-6 pb-24 min-h-screen">
 
-            {/* Banner de Confirmação (Sem alterações) */}
+            {/* Banner de Confirmação de Email */}
             {user && !user.email_confirmed_at && (
                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
-                    {/* ... (conteúdo do banner sem alteração) ... */}
+                    <p className="font-bold">Confirme seu email</p>
+                    <p className="text-sm">Verifique sua caixa de entrada para ativar todas as funções.</p>
+                    <button onClick={handleResendEmail} disabled={isResending} className="mt-2 text-sm underline font-bold">
+                        {isResending ? 'Enviando...' : 'Reenviar link'}
+                    </button>
+                    {resendMessage && <p className="mt-1 text-xs font-medium">{resendMessage}</p>}
                 </div>
             )}
 
-            {/* Header (Sem alterações) */}
+            {/* <<< NOVO: BANNER DE ATIVAÇÃO DE NOTIFICAÇÕES >>> */}
+            {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 flex flex-col sm:flex-row justify-between items-center rounded-r-lg shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="flex items-center mb-4 sm:mb-0">
+                        <div className="bg-blue-100 p-2 rounded-full mr-3">
+                            <Bell size={20} className="text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-blue-900 text-sm sm:text-base">Ativar avisos de agendamento?</p>
+                            <p className="text-xs sm:text-sm text-blue-700">Receba notificações instantâneas no seu celular.</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => usuario?.id && loginAndPrompt(usuario.id)}
+                        className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-md active:scale-95"
+                    >
+                        ATIVAR AGORA
+                    </button>
+                </div>
+            )}
+
+            {/* Header */}
             <div className="mb-6 md:mb-8">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Painel Administrativo</h1>
                 <p className="text-gray-600 text-sm md:text-base">Visão geral do seu negócio em tempo real</p>
             </div>
 
-            {/* --- <<< 4. NOVO CARD DE COMPARTILHAMENTO --- */}
+            {/* Card de Compartilhamento */}
             <div className="mb-6 md:mb-8">
                 <div className="p-4 bg-white rounded-xl shadow-sm border border-gray-100">
                     <h3 className="font-semibold text-gray-900 mb-2">Seu Link de Agendamento</h3>
@@ -144,9 +169,8 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
-            {/* --- FIM DO NOVO CARD --- */}
 
-            {/* 1. AGENDAMENTOS DE HOJE (MOVIDO PARA O TOPO) */}
+            {/* Agendamentos de Hoje */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 md:mb-8">
                 <div className="p-4 md:p-6 border-b border-gray-100 flex justify-between items-center">
                     <div>
@@ -166,24 +190,19 @@ export default function Dashboard() {
                             <p className="text-gray-500 text-sm md:text-base">Nenhum agendamento para hoje. Aproveite o dia!</p>
                         </div>
                     ) : (
-                        // <<< 3. LISTA DE AGENDAMENTOS MELHORADA
                         <div className="space-y-3">
                             {todayAppointments
                                 .sort((a, b) => (a.hora_agendamento || '').localeCompare(b.hora_agendamento || ''))
-                                // .slice(0, 5) <<< 4. REMOVI O LIMITE .slice(0, 5)
                                 .map((appointment) => {
                                     const client = clients.find(c => c.id === appointment.cliente_id);
-                                    const service = services.find(s => s.id === appointment.servico_id); // Busquei o serviço
+                                    const service = services.find(s => s.id === appointment.servico_id);
 
                                     return (
-                                        // <<< 5. CARD DE AGENDAMENTO OTIMIZADO PARA MOBILE
                                         <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg gap-3">
                                             <div className="flex items-center space-x-3">
-                                                {/* Destaque para a Hora */}
                                                 <span className="font-bold text-sm sm:text-base text-blue-600 w-12 text-center">
-                          {appointment.hora_agendamento || '--:--'}
-                        </span>
-                                                {/* Divisor Visual */}
+                                                    {appointment.hora_agendamento || '--:--'}
+                                                </span>
                                                 <div className="h-10 w-px bg-gray-300 hidden sm:block"></div>
                                                 <div>
                                                     <p className="font-medium text-gray-900 text-sm sm:text-base">
@@ -205,7 +224,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* 2. AÇÕES RÁPIDAS (MOVIDO PARA O MEIO) */}
+            {/* Ações Rápidas */}
             <div className="mb-6 md:mb-8">
                 <h2 className="text-lg font-semibold text-gray-800 mb-3">Ações Rápidas</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -215,7 +234,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* 3. MÉTRICAS DO MÊS (MOVIDO PARA O FIM) */}
+            {/* Métricas do Mês */}
             <div className="mb-6 md:mb-8">
                 <h2 className="text-lg font-semibold text-gray-800 mb-3">Métricas do Mês</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -226,12 +245,9 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* --- FIM DA REORDENAÇÃO --- */}
-
-
-            {/* --- <<< 6. BOTÃO DE AÇÃO FLUTUANTE (FAB) --- */}
+            {/* Botão de Ação Flutuante (FAB) */}
             <button
-                onClick={() => navigate('/schedule')} // Por enquanto, leva para a agenda
+                onClick={() => navigate('/schedule')}
                 className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-blue-600 rounded-full shadow-lg text-white hover:bg-blue-700 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 aria-label="Adicionar novo agendamento"
             >
