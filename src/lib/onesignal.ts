@@ -17,8 +17,7 @@ export function initOneSignal() {
       promptOptions: {
         slidedown: {
           enabled: true,
-          autoPrompt: true,
-          timeDelay: 3, // Aparece 3 segundos após o login
+          autoPrompt: false,
         }
       }
     });
@@ -29,16 +28,21 @@ export function initOneSignal() {
 }
 
 export function loginAndPrompt(userId: string) {
-  if (!window.OneSignal) return;
+  if (!window.OneSignal) {
+    console.error("❌ OneSignal não encontrado no window");
+    return;
+  }
 
   window.OneSignal.push(async () => {
-    // Vincula o ID e tenta mostrar a janelinha
-    await window.OneSignal.login(userId);
-    console.log("✅ OneSignal: Usuário logado:", userId);
-
-    const permission = await window.OneSignal.Notifications.permission;
-    if (permission !== "granted") {
-      window.OneSignal.Slidedown.show();
+    try {
+      console.log("🔄 Tentando vincular e mostrar prompt...");
+      await window.OneSignal.login(userId);
+      
+      await window.OneSignal.Slidedown.show({ force: true });
+      
+      console.log("🚀 OneSignal: Comando Slidedown enviado com sucesso");
+    } catch (err) {
+      console.error("❌ Erro ao disparar OneSignal:", err);
     }
   });
 }
