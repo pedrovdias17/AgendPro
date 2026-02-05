@@ -2,7 +2,7 @@ import {useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Componentes do Dono do Negócio
-import { initOneSignal } from "./lib/onesignal";
+import { initOneSignal, loginOneSignal } from "./lib/onesignal"; 
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Professionals from './components/Professionals';
@@ -31,6 +31,14 @@ import { DataProvider } from './contexts/DataContext';
 function AdminArea() {
     const { user, usuario } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        // Só vincula se o perfil do usuário (do seu banco) já estiver carregado
+        if (usuario?.id) {
+            initOneSignal();
+            loginAndPrompt(usuario.id);
+        }
+    }, [usuario?.id]);
 
     if (user === undefined) {
         return (
