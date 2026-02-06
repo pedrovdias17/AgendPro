@@ -7,6 +7,10 @@ import {
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom"; 
 
+const [openFaq, setOpenFaq] = React.useState<number | null>(null);
+
+
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -17,19 +21,31 @@ export default function Home() {
   };
 
   const faqs = [
-    { 
-      q: "O Agendpro tem teste grátis?", 
-      a: "Sim, você pode testar todas as funcionalidades gratuitamente por 14 dias. Sem necessidade de cartão de crédito." 
-    },
-    { 
-      q: "Precisa de WhatsApp Business?", 
-      a: "Não, o sistema funciona com qualquer conta de WhatsApp, seja pessoal ou Business." 
-    },
-    { 
-      q: "Funciona offline?", 
-      a: "Não, o Agendpro é uma ferramenta online para garantir sincronização em tempo real de qualquer lugar." 
-    }
-  ];
+  { 
+    q: "Minha agenda de papel é de graça. Por que eu pagaria por um app?", 
+    a: "O papel não é grátis, ele te custa tempo — e tempo é dinheiro. O papel não avisa quando um cliente desiste, não manda lembrete e não organiza seu financeiro. O Agendpro trabalha para você, enquanto o papel te dá trabalho." 
+  },
+  { 
+    q: "Meus clientes preferem marcar pelo Zap. Eles vão usar o link?", 
+    a: "Seu cliente quer conveniência. Poder marcar às 22h sem esperar você responder é um luxo que eles amam. Quem experimenta a facilidade do link profissional nunca mais quer voltar para a era da conversa travada no WhatsApp." 
+  },
+  { 
+    q: "14 dias de teste é pouco tempo. É alguma pegadinha de cobrança?", 
+    a: "A única pegadinha é continuar na bagunça. Não pedimos cartão de crédito para o teste. Se em 14 dias você não sentir que recuperou horas do seu dia, o sistema não é para você e está tudo bem. O risco é zero, o prejuízo de continuar parado é real." 
+  },
+  { 
+    q: "Eu trabalho sozinho. Preciso mesmo de um sistema?", 
+    a: "Justamente por ser sozinho você precisa de processos. Se você gasta tempo sendo seu próprio atendente, você está deixando de ganhar dinheiro atendendo.Está na hora de ser o especialista e focar mais na escala do seu negócio." 
+  },
+  { 
+    q: "E se eu me complicar na configuração?", 
+    a: "Você nunca estará sozinho. O AgendPro é pensado para ser o mais intuitivo possível para o usuário. Se mesmo assim tiver dificuldades, temos um botão de suporte direto no app para te orientar e auxiliar a extrair o máximo do app logo de cara. " 
+  },
+  { 
+    q: "Eu já dou conta de marcar tudo sozinho. Por que mudar?", 
+    a: "Dar conta não é crescer. Se você gasta 3 horas do dia respondendo mensagens básicas, você é escravo do seu WhatsApp. O Agendpro libera seu tempo para você focar no que realmente importa: o seu serviço e a escala do seu negócio." 
+  }
+];
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
