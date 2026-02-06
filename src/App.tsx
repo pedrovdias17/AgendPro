@@ -33,69 +33,46 @@ function AdminArea() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
-        // Só vincula se o perfil do usuário (do seu banco) já estiver carregado
         if (usuario?.id) {
             initOneSignal();
             loginAndPrompt(usuario.id);
         }
     }, [usuario?.id]);
 
-    if (user === undefined) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                Carregando...
-            </div>
-        );
-    }
-    if (user === null) {
-        return <Login />;
-    }
-    if (user && usuario === null) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                Carregando perfil...
-            </div>
-        );
-    }
-    if (user && usuario && usuario.has_completed_onboarding === false) {
-        return <OnboardingWizard />;
-    }
+    if (user === undefined) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    if (user === null) return <Login />;
+    if (user && usuario === null) return <div className="flex items-center justify-center h-screen">Carregando perfil...</div>;
+    if (user && usuario && usuario.has_completed_onboarding === false) return <OnboardingWizard />;
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
-            <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
-
-            <main className={`flex-1 transition-all duration-300 ${
-                sidebarOpen ? 'md:ml-64' : 'md:ml-16'
-            }`}>
-
-                <MobileHeader onToggleSidebar={() => setSidebarOpen(true)} />
-
-                <SubscriptionGuard>
-                    <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/professionals" element={<Professionals />} />
-                        <Route path="/services" element={<Services />} />
-                        <Route path="/schedule" element={<Schedule />} />
-                        <Route path="/clients" element={<Clients />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/upgrade" element={<Upgrade />} />
-                        <Route path="/legal" element={<Legal />} />
-                        <Route path="/payment/success" element={<PaymentSuccess />} />
-                        <Route path="/payment/cancel" element={<PaymentCancel />} />
-                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                    </Routes>
-                </SubscriptionGuard>
-            </main>
-        </div>
+        // O DataProvider agora abraça apenas a área administrativa
+        <DataProvider>
+            <div className="flex min-h-screen bg-gray-50">
+                <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+                {sidebarOpen && (
+                    <div className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden" onClick={() => setSidebarOpen(false)} />
+                )}
+                <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
+                    <MobileHeader onToggleSidebar={() => setSidebarOpen(true)} />
+                    <SubscriptionGuard>
+                        <Routes>
+                            <Route path="/" element={<Dashboard />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/professionals" element={<Professionals />} />
+                            <Route path="/services" element={<Services />} />
+                            <Route path="/schedule" element={<Schedule />} />
+                            <Route path="/clients" element={<Clients />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/upgrade" element={<Upgrade />} />
+                            <Route path="/legal" element={<Legal />} />
+                            <Route path="/payment/success" element={<PaymentSuccess />} />
+                            <Route path="/payment/cancel" element={<PaymentCancel />} />
+                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                    </SubscriptionGuard>
+                </main>
+            </div>
+        </DataProvider>
     );
 }
 
@@ -106,22 +83,18 @@ function App() {
 
     return (
         <AuthProvider>
-            <DataProvider>
-                <Router>
-                    <Routes>
-                        {/* 1. A Raiz agora carrega a sua nova Landing Page */}
-                        <Route path="/" element={<Home />} /> 
-                        
-                        {/* 2. Rotas Públicas de Agendamento e Cliente */}
-                        <Route path="/booking/:slug" element={<PublicBooking />} />
-                        <Route path="/client-login" element={<ClientLogin />} />
-                        <Route path="/client-area" element={<ClientArea />} />
-                        
-                        {/* 3. Todas as outras rotas (Dashboard, Agenda, etc) caem na AdminArea */}
-                        <Route path="/*" element={<AdminArea />} />
-                    </Routes>
-                </Router>
-            </DataProvider>
+            <Router>
+                <Routes>
+                    {/* Rotas Públicas - Fora do DataProvider para evitar erros de Token */}
+                    <Route path="/" element={<Home />} /> 
+                    <Route path="/booking/:slug" element={<PublicBooking />} />
+                    <Route path="/client-login" element={<ClientLogin />} />
+                    <Route path="/client-area" element={<ClientArea />} />
+                    
+                    {/* Rotas Privadas */}
+                    <Route path="/*" element={<AdminArea />} />
+                </Routes>
+            </Router>
         </AuthProvider>
     );
 }

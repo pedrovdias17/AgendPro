@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Professional, Service, Client, Appointment } from '../contexts/DataContext';
 import { sendNewAppointmentWebhook } from '../services/notificationService';
 import { 
   Scissors, MapPin, Clock, User, DollarSign, Check, Phone, Mail, Calendar 
@@ -24,6 +23,20 @@ interface WorkingHours {
     start: string;
     end: string;
   }
+}
+
+interface Professional {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  duration: number;
+  price: number;
+  professionalId: string;
 }
 
 export default function PublicBooking() {
