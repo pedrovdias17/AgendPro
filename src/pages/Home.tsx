@@ -7,12 +7,10 @@ import {
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom"; 
 
-const [openFaq, setOpenFaq] = React.useState<number | null>(null);
-
-
-
 export default function Home() {
   const navigate = useNavigate();
+
+const [openFaq, setOpenFaq] = React.useState<number | null>(null);
 
   const handleStartNow = () => {
     toast.info("Redirecionando...");
