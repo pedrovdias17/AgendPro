@@ -1,4 +1,4 @@
-import {useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Componentes do Dono do Negócio
@@ -18,6 +18,7 @@ import OnboardingWizard from './components/OnboardingWizard';
 import MobileHeader from './components/MobileHeader'; 
 
 // Páginas Públicas e da Área do Cliente
+import Home from './pages/Home'; // <<< NOVA LANDING PAGE IMPORTADA
 import PublicBooking from './pages/PublicBooking';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
@@ -26,7 +27,6 @@ import ClientArea from './pages/ClientArea';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
-
 
 function AdminArea() {
     const { user, usuario } = useAuth();
@@ -61,12 +61,10 @@ function AdminArea() {
         return <OnboardingWizard />;
     }
 
-    // --- Início das Mudanças de Layout ---
     return (
         <div className="flex min-h-screen bg-gray-50">
             <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-            {/* <<< 3. OVERLAY (para fechar a sidebar no mobile) */}
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
@@ -74,13 +72,10 @@ function AdminArea() {
                 />
             )}
 
-            {/* <<< 4. MUDANÇA NO 'className' DO MAIN */}
-            {/* Remove 'ml-16'/'ml-64' no mobile, mantendo só no desktop ('md:') */}
             <main className={`flex-1 transition-all duration-300 ${
                 sidebarOpen ? 'md:ml-64' : 'md:ml-16'
             }`}>
 
-                {/* <<< 5. HEADER MOBILE ADICIONADO */}
                 <MobileHeader onToggleSidebar={() => setSidebarOpen(true)} />
 
                 <SubscriptionGuard>
@@ -104,23 +99,25 @@ function AdminArea() {
     );
 }
 
-
-
-
 function App() {
-
-        useEffect(() => {
-  initOneSignal();
-}, []);
+    useEffect(() => {
+        initOneSignal();
+    }, []);
 
     return (
         <AuthProvider>
             <DataProvider>
                 <Router>
                     <Routes>
+                        {/* 1. A Raiz agora carrega a sua nova Landing Page */}
+                        <Route path="/" element={<Home />} /> 
+                        
+                        {/* 2. Rotas Públicas de Agendamento e Cliente */}
                         <Route path="/booking/:slug" element={<PublicBooking />} />
                         <Route path="/client-login" element={<ClientLogin />} />
                         <Route path="/client-area" element={<ClientArea />} />
+                        
+                        {/* 3. Todas as outras rotas (Dashboard, Agenda, etc) caem na AdminArea */}
                         <Route path="/*" element={<AdminArea />} />
                     </Routes>
                 </Router>
