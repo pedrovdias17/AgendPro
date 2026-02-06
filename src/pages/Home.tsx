@@ -64,8 +64,6 @@ export default function Home() {
         </div>
         <div className="relative flex justify-center order-1 md:order-2">
           <div className="absolute inset-0 bg-blue-100/40 blur-3xl rounded-full -z-10" />
-          
-          {/* AQUI ESTÁ A MÁGICA: A tag img puxando da pasta public */}
           <img 
             src="/celular-hero.png" 
             alt="Agendpro no celular com notificação"
