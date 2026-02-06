@@ -365,7 +365,7 @@ export default function PublicBooking() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center space-x-4">
-              <img src="/logo.svg" alt="Logo AgendPro" className="w-24" />
+              <img src="/logo.png" alt="Logo AgendPro" className="w-24" />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{studioInfo?.name}</h1>
               <p className="text-sm text-gray-600">{studioInfo?.address}</p>

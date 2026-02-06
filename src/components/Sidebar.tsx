@@ -68,7 +68,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
             <div className="flex items-center justify-between p-4 border-b">
                 <div className={`flex items-center space-x-3 ${!isOpen && 'justify-center'}`}>
                     <img
-                        src="/logo.svg"
+                        src="/logo.png"
                         alt="Logo AgendPro"
                         className="w-24 h-16"
                     />
