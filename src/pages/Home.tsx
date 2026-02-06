@@ -62,20 +62,15 @@ export default function Home() {
             <span className="flex items-center gap-2"><Check size={16} className="text-blue-500"/> Sem cartão de crédito</span>
           </div>
         </div>
-        <div className="relative flex justify-center">
+        <div className="relative flex justify-center order-1 md:order-2">
           <div className="absolute inset-0 bg-blue-100/40 blur-3xl rounded-full -z-10" />
-          <div className="relative bg-white p-4 rounded-[3rem] shadow-2xl border-[8px] border-slate-900 w-full max-w-[300px]">
-             <div className="bg-slate-100 rounded-2xl p-4 mt-20 shadow-sm border border-white">
-                <div className="flex items-center gap-3">
-                   <div className="bg-blue-600 p-2 rounded-lg text-white"><Calendar size={18}/></div>
-                   <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase">Novo Agendamento</p>
-                      <p className="text-xs font-bold text-slate-800">Cliente Pedro - 15:00</p>
-                   </div>
-                </div>
-             </div>
-             <div className="h-64" />
-          </div>
+          
+          {/* AQUI ESTÁ A MÁGICA: A tag img puxando da pasta public */}
+          <img 
+            src="/celular-hero.png" 
+            alt="Agendpro no celular com notificação"
+            className="w-full max-w-[350px] md:max-w-[400px] drop-shadow-2xl mx-auto hover:-translate-y-2 transition-transform duration-500"
+          />
         </div>
       </section>
 
