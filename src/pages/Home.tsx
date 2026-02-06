@@ -12,7 +12,7 @@ export default function Home() {
 
   const handleStartNow = () => {
     toast.info("Redirecionando...");
-    /
+    
     navigate('/dashboard'); 
   };
 
