@@ -2,17 +2,18 @@ import React from 'react';
 import { 
   Check, Instagram, Linkedin, Mail, 
   MessageSquare, Bell, Smartphone, 
-  ArrowRight, CheckCircle2, X 
+  Calendar, CheckCircle2 
 } from 'lucide-react';
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom"; 
 
 export default function Home() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
 
   const handleStartNow = () => {
     toast.info("Redirecionando...");
-    setLocation('/dashboard'); 
+    /
+    navigate('/dashboard'); 
   };
 
   const faqs = [
@@ -32,7 +33,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
-      {/* HEADER */}
       <nav className="flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
         <div className="text-2xl font-black text-blue-600 tracking-tighter">Agendpro</div>
         <button 
@@ -43,7 +43,6 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* HERO */}
       <section className="px-6 py-12 md:py-20 max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div className="space-y-8 text-center md:text-left">
           <h1 className="text-4xl md:text-6xl font-black leading-tight tracking-tight">
@@ -65,7 +64,6 @@ export default function Home() {
         </div>
         <div className="relative flex justify-center">
           <div className="absolute inset-0 bg-blue-100/40 blur-3xl rounded-full -z-10" />
-          {/* Mockup do Celular com a Notificação */}
           <div className="relative bg-white p-4 rounded-[3rem] shadow-2xl border-[8px] border-slate-900 w-full max-w-[300px]">
              <div className="bg-slate-100 rounded-2xl p-4 mt-20 shadow-sm border border-white">
                 <div className="flex items-center gap-3">
@@ -76,12 +74,11 @@ export default function Home() {
                    </div>
                 </div>
              </div>
-             <div className="h-64" /> {/* Espaço simulando o restante da tela */}
+             <div className="h-64" />
           </div>
         </div>
       </section>
 
-      {/* COMPARATIVO */}
       <section className="bg-slate-50 py-20 px-6">
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-3xl border border-slate-100">
@@ -103,7 +100,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className="py-20 px-6 max-w-3xl mx-auto">
         <h2 className="text-2xl font-black text-center mb-10">Perguntas Frequentes</h2>
         <div className="space-y-4">
@@ -116,7 +112,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="py-12 px-6 border-t text-center">
         <div className="text-xl font-black text-blue-600 mb-2">Agendpro</div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
