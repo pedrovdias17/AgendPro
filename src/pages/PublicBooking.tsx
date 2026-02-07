@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { sendNewAppointmentWebhook } from '../services/notificationService';
 
-// Interfaces locais para evitar dependência do DataContext
 interface StudioInfo {
   name: string;
   address: string;
@@ -43,9 +42,9 @@ export default function PublicBooking() {
   const [clientData, setClientData] = useState({ name: '', phone: '', email: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workingHours, setWorkingHours] = useState<WorkingHours | null>(null);
-  const [busySlots, setBusySlots] = useState<string[]>([]);
+  const [busySlots, setBusySlots] = useState<string[]>([]); // Estado único para horários ocupados
+  
   const BUFFER_TIME = 15;
-
 
   // 1. Busca dados iniciais do estúdio
   useEffect(() => {
@@ -103,9 +102,9 @@ export default function PublicBooking() {
     fetchStudioData();
   }, [slug]);
 
-  // 2. Busca horários ocupados quando a data é selecionada
+  // 2. Busca horários ocupados com correção de segundos
   useEffect(() => {
-    if (!ownerId || !selectedDate) return;
+    if (!selectedDate || !ownerId) return;
 
     const fetchBusySlots = async () => {
       const { data } = await supabase
@@ -115,14 +114,18 @@ export default function PublicBooking() {
         .eq('data_agendamento', selectedDate)
         .neq('status', 'cancelled');
 
-      if (data) setBusySlots(data.map(a => a.hora_agendamento));
+      if (data) {
+        // Cortamos "08:00:00" para "08:00" para bater com a lista gerada
+        setBusySlots(data.map(a => a.hora_agendamento.slice(0, 5)));
+      }
     };
 
     fetchBusySlots();
-  }, [ownerId, selectedDate]);
+  }, [selectedDate, ownerId]);
 
   const selectedServiceData = services.find(s => s.id === selectedService);
 
+  // 3. Gera TODOS os horários possíveis (sem filtrar os ocupados aqui)
   const timeSlots = useMemo(() => {
     if (!selectedServiceData || !selectedDate || !workingHours) return [];
     
@@ -144,59 +147,70 @@ export default function PublicBooking() {
     while (current + selectedServiceData.duration <= end) {
       const h = Math.floor(current / 60).toString().padStart(2, '0');
       const m = (current % 60).toString().padStart(2, '0');
-      const time = `${h}:${m}`;
-      
-      if (!busySlots.includes(time)) slots.push(time);
+      slots.push(`${h}:${m}`); 
       current += totalWindow; 
     }
     return slots;
-  }, [selectedDate, workingHours, selectedServiceData, busySlots]);
+  }, [selectedDate, workingHours, selectedServiceData]);
+
+  // 4. Máscara de Telefone Automática
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ""); 
+    if (value.length > 11) value = value.slice(0, 11);
+
+    if (value.length > 10) {
+      value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3");
+    } else if (value.length > 6) {
+      value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
+    } else if (value.length > 2) {
+      value = value.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
+    } else if (value.length > 0) {
+      value = value.replace(/^(\d*)/, "($1");
+    }
+    setClientData({ ...clientData, phone: value });
+  };
 
   const handleSubmit = async () => {
-  if (!clientData.name || !clientData.phone) return alert('Preencha seus dados');
-  setIsSubmitting(true);
-  
-  try {
-    // 1. Cria ou busca o cliente
-    const { data: clientId } = await supabase.rpc('find_or_create_client', {
-      p_owner_id: ownerId, p_name: clientData.name, p_phone: clientData.phone,
-      p_email: clientData.email, p_last_visit: selectedDate
-    });
+    if (!clientData.name || !clientData.phone) return alert('Preencha seus dados');
+    setIsSubmitting(true);
+    
+    try {
+      const { data: clientId } = await supabase.rpc('find_or_create_client', {
+        p_owner_id: ownerId, p_name: clientData.name, p_phone: clientData.phone,
+        p_email: clientData.email, p_last_visit: selectedDate
+      });
 
-    // 2. Salva o agendamento no banco
-    const { data: newAppointment, error: aptError } = await supabase
-      .from('agendamentos')
-      .insert({
-        usuario_id: ownerId, 
-        cliente_id: clientId, 
-        servico_id: selectedService,
-        profissional_id: selectedServiceData?.professionalId, 
-        data_agendamento: selectedDate,
-        hora_agendamento: selectedTime, 
-        status: 'pending'
-      })
-      .select()
-      .single();
+      const { data: newAppointment, error: aptError } = await supabase
+        .from('agendamentos')
+        .insert({
+          usuario_id: ownerId, 
+          cliente_id: clientId, 
+          servico_id: selectedService,
+          profissional_id: selectedServiceData?.professionalId, 
+          data_agendamento: selectedDate,
+          hora_agendamento: selectedTime, 
+          status: 'pending'
+        })
+        .select()
+        .single();
 
-    if (aptError) throw aptError;
+      if (aptError) throw aptError;
 
-    // --- MÁGICA: CHAMA O SERVIÇO DE NOTIFICAÇÃO ---
-    // Importe o 'sendNewAppointmentWebhook' no topo do arquivo se ainda não estiver lá!
-    await sendNewAppointmentWebhook({
-      newAppointment: newAppointment as any,
-      clientRecord: { nome: clientData.name, telefone: clientData.phone, email: clientData.email } as any,
-      serviceDetails: selectedServiceData as any,
-      user: { id: ownerId } as any 
-    });
+      await sendNewAppointmentWebhook({
+        newAppointment: newAppointment as any,
+        clientRecord: { nome: clientData.name, telefone: clientData.phone, email: clientData.email } as any,
+        serviceDetails: selectedServiceData as any,
+        user: { id: ownerId } as any 
+      });
 
-    setStep(5); // Vai para tela de sucesso
-  } catch (e) {
-    console.error("Erro no fluxo:", e);
-    alert('Erro ao agendar, tente novamente.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      setStep(5);
+    } catch (e) {
+      console.error("Erro no fluxo:", e);
+      alert('Erro ao agendar, tente novamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen font-bold text-blue-600">Carregando...</div>;
   if (!ownerId) return <div className="flex items-center justify-center min-h-screen">Negócio não encontrado.</div>;
@@ -226,16 +240,29 @@ export default function PublicBooking() {
 
         {step === 2 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-black text-gray-800 mb-4">Selecione a Data</h2>
+            <h2 className="text-lg font-black text-gray-800 mb-4">Selecione a Data e Horário</h2>
             <div className="bg-white p-6 rounded-3xl shadow-sm">
-              <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
+              <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold mb-6" />
               {selectedDate && (
-                <div className="grid grid-cols-3 gap-2 mt-6">
-                  {timeSlots.map(t => (
-                    <button key={t} onClick={() => { setSelectedTime(t); setStep(4); }} className="p-3 bg-gray-50 rounded-xl text-sm font-bold text-gray-700 hover:bg-blue-600 hover:text-white transition-colors">
-                      {t}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-3 gap-2">
+                  {timeSlots.map(t => {
+                    const isBusy = busySlots.includes(t); // Verifica se o horário está ocupado
+                    return (
+                      <button 
+                        key={t} 
+                        disabled={isBusy} // Bloqueia o clique se estiver ocupado
+                        onClick={() => { setSelectedTime(t); setStep(4); }} 
+                        className={`p-3 rounded-xl text-xs font-bold transition-all ${
+                          isBusy 
+                            ? 'bg-gray-100 text-gray-300 cursor-not-allowed border-none' // Estilo de ocupado
+                            : 'bg-gray-50 text-gray-700 hover:bg-blue-600 hover:text-white'
+                        }`}
+                      >
+                        {t}
+                        {isBusy && <span className="block text-[8px] opacity-40">Ocupado</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -248,7 +275,7 @@ export default function PublicBooking() {
             <h2 className="text-lg font-black text-gray-800 mb-4">Seus Dados</h2>
             <div className="bg-white p-6 rounded-3xl shadow-sm space-y-4">
               <input type="text" placeholder="Seu Nome" value={clientData.name} onChange={e => setClientData({...clientData, name: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
-              <input type="tel" placeholder="WhatsApp (com DDD)" value={clientData.phone} onChange={e => setClientData({...clientData, phone: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
+              <input type="tel" placeholder="WhatsApp (com DDD)" value={clientData.phone} onChange={handlePhoneChange} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
               <button onClick={handleSubmit} disabled={isSubmitting} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100">
                 {isSubmitting ? 'Agendando...' : 'Confirmar Horário'}
               </button>
