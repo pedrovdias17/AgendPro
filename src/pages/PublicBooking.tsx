@@ -43,6 +43,8 @@ export default function PublicBooking() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workingHours, setWorkingHours] = useState<WorkingHours | null>(null);
   const [busySlots, setBusySlots] = useState<string[]>([]);
+  const BUFFER_TIME = 15;
+
 
   // 1. Busca dados iniciais do estúdio
   useEffect(() => {
@@ -136,13 +138,15 @@ export default function PublicBooking() {
     let current = startH * 60 + startM;
     const end = endH * 60 + endM;
 
+    const totalWindow = selectedServiceData.duration + BUFFER_TIME;
+
     while (current + selectedServiceData.duration <= end) {
       const h = Math.floor(current / 60).toString().padStart(2, '0');
       const m = (current % 60).toString().padStart(2, '0');
       const time = `${h}:${m}`;
       
       if (!busySlots.includes(time)) slots.push(time);
-      current += 30; 
+      current += totalWindow; 
     }
     return slots;
   }, [selectedDate, workingHours, selectedServiceData, busySlots]);
@@ -236,7 +240,7 @@ export default function PublicBooking() {
               <Check size={40} />
             </div>
             <h2 className="text-2xl font-black text-gray-900">Agendado com Sucesso!</h2>
-            <p className="text-gray-500 font-medium mt-2">O profissional foi notificado e sua vaga está garantida.</p>
+            <p className="text-gray-500 font-medium mt-2">Em breve você receberá uma confirmação no Whatsapp fornecido</p>
           </div>
         )}
       </div>
