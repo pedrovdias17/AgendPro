@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { sendNewAppointmentWebhook } from '../services/notificationService';
 import { 
-  Scissors, MapPin, Clock, User, DollarSign, Check, Phone, Mail, Calendar 
+  Scissors, MapPin, Clock, User, Check, Calendar 
 } from 'lucide-react';
-import DatePicker, { registerLocale } from "react-datepicker";
-import { ptBR } from 'date-fns/locale/pt-BR';
-import "react-datepicker/dist/react-datepicker.css";
 
-registerLocale('pt-BR', ptBR);
-
+// Interfaces locais para evitar dependência do DataContext
 interface StudioInfo {
   name: string;
   address: string;
@@ -25,12 +20,6 @@ interface WorkingHours {
   }
 }
 
-interface Professional {
-  id: string;
-  name: string;
-  avatar?: string;
-}
-
 interface Service {
   id: string;
   name: string;
@@ -43,27 +32,25 @@ export default function PublicBooking() {
   const { slug } = useParams();
   const [studioInfo, setStudioInfo] = useState<StudioInfo | null>(null);
   const [services, setServices] = useState<Service[]>([]);
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [ownerId, setOwnerId] = useState<string | null>(null);
   
   const [step, setStep] = useState(1);
   const [selectedService, setSelectedService] = useState('');
-  const [selectedProfessional, setSelectedProfessional] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [clientData, setClientData] = useState({ name: '', phone: '', email: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingAppointments, setExistingAppointments] = useState<{time: string, duration: number}[]>([]);
   const [workingHours, setWorkingHours] = useState<WorkingHours | null>(null);
+  const [busySlots, setBusySlots] = useState<string[]>([]);
 
+  // 1. Busca dados iniciais do estúdio
   useEffect(() => {
     if (!slug) return;
 
     const fetchStudioData = async () => {
       setIsLoading(true);
       
-      // 1. Busca o Dono pelo Slug
       const { data: owner, error: ownerError } = await supabase
         .from('usuarios')
         .select('id, nome_do_negocio, endereco, telefone')
@@ -82,7 +69,6 @@ export default function PublicBooking() {
         phone: owner.telefone || ''
       });
 
-      // 2. Busca os Horários de Funcionamento na tabela correta
       const { data: hoursData } = await supabase
         .from('horarios_funcionamento')
         .select('*')
@@ -101,29 +87,41 @@ export default function PublicBooking() {
         setWorkingHours(formattedHours);
       }
 
-      // 3. Busca Serviços e Profissionais
       const { data: servicesData } = await supabase
         .from('servicos')
         .select('*')
         .eq('usuario_id', owner.id)
         .eq('active', true);
         
-      const { data: professionalsData } = await supabase
-        .from('profissionais')
-        .select('*')
-        .eq('usuario_id', owner.id);
-
       setServices(servicesData || []);
-      setProfessionals(professionalsData || []);
       setIsLoading(false);
     };
 
     fetchStudioData();
   }, [slug]);
 
-  // Lógica de horários disponíveis
+  // 2. Busca horários ocupados quando a data é selecionada
+  useEffect(() => {
+    if (!ownerId || !selectedDate) return;
+
+    const fetchBusySlots = async () => {
+      const { data } = await supabase
+        .from('agendamentos')
+        .select('hora_agendamento')
+        .eq('usuario_id', ownerId)
+        .eq('data_agendamento', selectedDate)
+        .neq('status', 'cancelled');
+
+      if (data) setBusySlots(data.map(a => a.hora_agendamento));
+    };
+
+    fetchBusySlots();
+  }, [ownerId, selectedDate]);
+
+  const selectedServiceData = services.find(s => s.id === selectedService);
+
   const timeSlots = useMemo(() => {
-    if (!selectedServiceData || !selectedProfessional || !selectedDate || !workingHours) return [];
+    if (!selectedServiceData || !selectedDate || !workingHours) return [];
     
     const dateObj = new Date(`${selectedDate}T00:00:00`);
     const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -143,24 +141,11 @@ export default function PublicBooking() {
       const m = (current % 60).toString().padStart(2, '0');
       const time = `${h}:${m}`;
       
-      // Verifica se o horário já está ocupado
-      const isOccupied = existingAppointments.some(apt => apt.time === time);
-      if (!isOccupied) slots.push(time);
-      
-      current += 30; // Pula de 30 em 30 min
+      if (!busySlots.includes(time)) slots.push(time);
+      current += 30; 
     }
     return slots;
-  }, [selectedDate, selectedProfessional, workingHours, selectedServiceData, existingAppointments]);
-
-  const selectedServiceData = services.find(s => s.id === selectedService);
-  const selectedProfessionalData = professionals.find(p => p.id === selectedProfessional);
-
-  const handleServiceSelect = (serviceId: string) => {
-    setSelectedService(serviceId);
-    const service = services.find(s => s.id === serviceId);
-    if (service) setSelectedProfessional(service.professionalId);
-    setStep(2);
-  };
+  }, [selectedDate, workingHours, selectedServiceData, busySlots]);
 
   const handleSubmit = async () => {
     if (!clientData.name || !clientData.phone) return alert('Preencha seus dados');
@@ -172,11 +157,11 @@ export default function PublicBooking() {
         p_email: clientData.email, p_last_visit: selectedDate
       });
 
-      const { data: newAppointment, error } = await supabase.from('agendamentos').insert({
+      const { error } = await supabase.from('agendamentos').insert({
         usuario_id: ownerId, cliente_id: clientId, servico_id: selectedService,
-        profissional_id: selectedProfessional, data_agendamento: selectedDate,
+        profissional_id: selectedServiceData?.professionalId, data_agendamento: selectedDate,
         hora_agendamento: selectedTime, status: 'pending'
-      }).select().single();
+      });
 
       if (error) throw error;
       setStep(5);
@@ -187,11 +172,11 @@ export default function PublicBooking() {
     }
   };
 
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen font-bold text-blue-600">Carregando...</div>;
   if (!ownerId) return <div className="flex items-center justify-center min-h-screen">Negócio não encontrado.</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
       <div className="bg-white p-6 border-b text-center">
         <h1 className="text-2xl font-black text-gray-900">{studioInfo?.name}</h1>
         <p className="text-sm text-gray-500 font-medium">{studioInfo?.address}</p>
@@ -202,7 +187,7 @@ export default function PublicBooking() {
           <div className="space-y-4">
             <h2 className="text-lg font-black text-gray-800 uppercase tracking-widest mb-4">Escolha o Serviço</h2>
             {services.map(s => (
-              <button key={s.id} onClick={() => handleServiceSelect(s.id)} className="w-full p-5 bg-white rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center active:scale-95 transition-all">
+              <button key={s.id} onClick={() => { setSelectedService(s.id); setStep(2); }} className="w-full p-5 bg-white rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center active:scale-95 transition-all">
                 <div className="text-left">
                   <p className="font-bold text-gray-900">{s.name}</p>
                   <p className="text-xs text-gray-500 font-medium">{s.duration} min</p>
@@ -215,16 +200,18 @@ export default function PublicBooking() {
 
         {step === 2 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-black text-gray-800 mb-4">Data e Horário</h2>
-            <div className="bg-white p-6 rounded-3xl shadow-sm space-y-4">
+            <h2 className="text-lg font-black text-gray-800 mb-4">Selecione a Data</h2>
+            <div className="bg-white p-6 rounded-3xl shadow-sm">
               <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
-              <div className="grid grid-cols-3 gap-2">
-                {timeSlots.map(t => (
-                  <button key={t} onClick={() => { setSelectedTime(t); setStep(4); }} className="p-3 bg-gray-50 rounded-xl text-sm font-bold text-gray-700 hover:bg-blue-600 hover:text-white transition-colors">
-                    {t}
-                  </button>
-                ))}
-              </div>
+              {selectedDate && (
+                <div className="grid grid-cols-3 gap-2 mt-6">
+                  {timeSlots.map(t => (
+                    <button key={t} onClick={() => { setSelectedTime(t); setStep(4); }} className="p-3 bg-gray-50 rounded-xl text-sm font-bold text-gray-700 hover:bg-blue-600 hover:text-white transition-colors">
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button onClick={() => setStep(1)} className="w-full text-gray-400 font-bold">Voltar</button>
           </div>
@@ -235,7 +222,7 @@ export default function PublicBooking() {
             <h2 className="text-lg font-black text-gray-800 mb-4">Seus Dados</h2>
             <div className="bg-white p-6 rounded-3xl shadow-sm space-y-4">
               <input type="text" placeholder="Seu Nome" value={clientData.name} onChange={e => setClientData({...clientData, name: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
-              <input type="tel" placeholder="WhatsApp" value={clientData.phone} onChange={e => setClientData({...clientData, phone: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
+              <input type="tel" placeholder="WhatsApp (com DDD)" value={clientData.phone} onChange={e => setClientData({...clientData, phone: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold" />
               <button onClick={handleSubmit} disabled={isSubmitting} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100">
                 {isSubmitting ? 'Agendando...' : 'Confirmar Horário'}
               </button>
@@ -248,8 +235,8 @@ export default function PublicBooking() {
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <Check size={40} />
             </div>
-            <h2 className="text-2xl font-black text-gray-900">Agendado!</h2>
-            <p className="text-gray-500 font-medium mt-2">Você receberá uma confirmação no WhatsApp em breve.</p>
+            <h2 className="text-2xl font-black text-gray-900">Agendado com Sucesso!</h2>
+            <p className="text-gray-500 font-medium mt-2">O profissional foi notificado e sua vaga está garantida.</p>
           </div>
         )}
       </div>

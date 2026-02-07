@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-// Componentes do Dono do Negócio
 import { initOneSignal, loginAndPrompt } from "./lib/onesignal"; 
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DataProvider } from './contexts/DataContext';
+
+// Componentes
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Professionals from './components/Professionals';
@@ -17,16 +19,11 @@ import SubscriptionGuard from './components/SubscriptionGuard';
 import OnboardingWizard from './components/OnboardingWizard';
 import MobileHeader from './components/MobileHeader'; 
 
-// Páginas Públicas e da Área do Cliente
-import Home from './pages/Home'; // <<< NOVA LANDING PAGE IMPORTADA
+// Páginas Públicas
+import Home from './pages/Home';
 import PublicBooking from './pages/PublicBooking';
-import PaymentSuccess from './pages/PaymentSuccess';
-import PaymentCancel from './pages/PaymentCancel';
 import ClientLogin from './pages/ClientLogin';
 import ClientArea from './pages/ClientArea';
-
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { DataProvider } from './contexts/DataContext';
 
 function AdminArea() {
     const { user, usuario } = useAuth();
@@ -39,19 +36,17 @@ function AdminArea() {
         }
     }, [usuario?.id]);
 
-    if (user === undefined) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    if (user === undefined) return <div className="flex items-center justify-center h-screen font-bold">Carregando...</div>;
     if (user === null) return <Login />;
-    if (user && usuario === null) return <div className="flex items-center justify-center h-screen">Carregando perfil...</div>;
+    if (user && usuario === null) return <div className="flex items-center justify-center h-screen font-bold">Carregando perfil...</div>;
     if (user && usuario && usuario.has_completed_onboarding === false) return <OnboardingWizard />;
 
     return (
-        // O DataProvider agora abraça apenas a área administrativa
+        // O DataProvider agora só é ativado se o usuário estiver logado
         <DataProvider>
             <div className="flex min-h-screen bg-gray-50">
                 <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-                {sidebarOpen && (
-                    <div className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden" onClick={() => setSidebarOpen(false)} />
-                )}
+                {sidebarOpen && <div className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden" onClick={() => setSidebarOpen(false)} />}
                 <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
                     <MobileHeader onToggleSidebar={() => setSidebarOpen(true)} />
                     <SubscriptionGuard>
@@ -65,8 +60,6 @@ function AdminArea() {
                             <Route path="/settings" element={<Settings />} />
                             <Route path="/upgrade" element={<Upgrade />} />
                             <Route path="/legal" element={<Legal />} />
-                            <Route path="/payment/success" element={<PaymentSuccess />} />
-                            <Route path="/payment/cancel" element={<PaymentCancel />} />
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
                     </SubscriptionGuard>
@@ -77,21 +70,19 @@ function AdminArea() {
 }
 
 function App() {
-    useEffect(() => {
-        initOneSignal();
-    }, []);
+    useEffect(() => { initOneSignal(); }, []);
 
     return (
         <AuthProvider>
             <Router>
                 <Routes>
-                    {/* Rotas Públicas - Fora do DataProvider para evitar erros de Token */}
+                    {/* Rotas Públicas: Não usam DataProvider, logo não dão erro de Token */}
                     <Route path="/" element={<Home />} /> 
                     <Route path="/booking/:slug" element={<PublicBooking />} />
                     <Route path="/client-login" element={<ClientLogin />} />
                     <Route path="/client-area" element={<ClientArea />} />
                     
-                    {/* Rotas Privadas */}
+                    {/* Rota Privada: DataProvider está aqui dentro */}
                     <Route path="/*" element={<AdminArea />} />
                 </Routes>
             </Router>
