@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { 
   Scissors, MapPin, Clock, User, Check, Calendar 
 } from 'lucide-react';
-import { sendNewAppointmentWebhook } from '.../services/notificationService';
+import { sendNewAppointmentWebhook } from '../services/notificationService';
 
 // Interfaces locais para evitar dependência do DataContext
 interface StudioInfo {
