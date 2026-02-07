@@ -30,6 +30,7 @@ function AdminArea() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
+        // Inicializa e vincula apenas UMA vez quando o perfil carregar
         if (usuario?.id) {
             initOneSignal();
             loginAndPrompt(usuario.id);
@@ -70,8 +71,6 @@ function AdminArea() {
 }
 
 function App() {
-    useEffect(() => { initOneSignal(); }, []);
-
     return (
         <AuthProvider>
             <Router>
