@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { 
   Scissors, MapPin, Clock, User, Check, Calendar 
 } from 'lucide-react';
+import { sendNewAppointmentWebhook } from '.../services/notificationService';
 
 // Interfaces locais para evitar dependência do DataContext
 interface StudioInfo {
@@ -152,29 +153,50 @@ export default function PublicBooking() {
   }, [selectedDate, workingHours, selectedServiceData, busySlots]);
 
   const handleSubmit = async () => {
-    if (!clientData.name || !clientData.phone) return alert('Preencha seus dados');
-    setIsSubmitting(true);
-    
-    try {
-      const { data: clientId } = await supabase.rpc('find_or_create_client', {
-        p_owner_id: ownerId, p_name: clientData.name, p_phone: clientData.phone,
-        p_email: clientData.email, p_last_visit: selectedDate
-      });
+  if (!clientData.name || !clientData.phone) return alert('Preencha seus dados');
+  setIsSubmitting(true);
+  
+  try {
+    // 1. Cria ou busca o cliente
+    const { data: clientId } = await supabase.rpc('find_or_create_client', {
+      p_owner_id: ownerId, p_name: clientData.name, p_phone: clientData.phone,
+      p_email: clientData.email, p_last_visit: selectedDate
+    });
 
-      const { error } = await supabase.from('agendamentos').insert({
-        usuario_id: ownerId, cliente_id: clientId, servico_id: selectedService,
-        profissional_id: selectedServiceData?.professionalId, data_agendamento: selectedDate,
-        hora_agendamento: selectedTime, status: 'pending'
-      });
+    // 2. Salva o agendamento no banco
+    const { data: newAppointment, error: aptError } = await supabase
+      .from('agendamentos')
+      .insert({
+        usuario_id: ownerId, 
+        cliente_id: clientId, 
+        servico_id: selectedService,
+        profissional_id: selectedServiceData?.professionalId, 
+        data_agendamento: selectedDate,
+        hora_agendamento: selectedTime, 
+        status: 'pending'
+      })
+      .select()
+      .single();
 
-      if (error) throw error;
-      setStep(5);
-    } catch (e) {
-      alert('Erro ao agendar');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    if (aptError) throw aptError;
+
+    // --- MÁGICA: CHAMA O SERVIÇO DE NOTIFICAÇÃO ---
+    // Importe o 'sendNewAppointmentWebhook' no topo do arquivo se ainda não estiver lá!
+    await sendNewAppointmentWebhook({
+      newAppointment: newAppointment as any,
+      clientRecord: { nome: clientData.name, telefone: clientData.phone, email: clientData.email } as any,
+      serviceDetails: selectedServiceData as any,
+      user: { id: ownerId } as any 
+    });
+
+    setStep(5); // Vai para tela de sucesso
+  } catch (e) {
+    console.error("Erro no fluxo:", e);
+    alert('Erro ao agendar, tente novamente.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen font-bold text-blue-600">Carregando...</div>;
   if (!ownerId) return <div className="flex items-center justify-center min-h-screen">Negócio não encontrado.</div>;
@@ -240,7 +262,7 @@ export default function PublicBooking() {
               <Check size={40} />
             </div>
             <h2 className="text-2xl font-black text-gray-900">Agendado com Sucesso!</h2>
-            <p className="text-gray-500 font-medium mt-2">Em breve você receberá uma confirmação no Whatsapp fornecido</p>
+            <p className="text-gray-500 font-medium mt-2">Em breve você receberá uma confirmação no Whatsapp</p>
           </div>
         )}
       </div>

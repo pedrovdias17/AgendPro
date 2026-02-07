@@ -3,36 +3,26 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { 
   CheckCircle2, 
-  Bell, 
-  MessageCircle, 
   User, 
-  Scissors, 
-  Clock, 
-  Check 
+  Phone,
+  Check,
+  ChevronLeft
 } from 'lucide-react';
 
 const OnboardingWizard = () => {
     const { usuario, updateProfile } = useAuth();
-    
-    // Começamos no Passo 1 (Profissional), pois Nome/Link já foram pegos no cadastro
     const [step, setStep] = useState(1);
-    const [isFinished, setIsFinished] = useState(false); // Nova tela final
+    const [isFinished, setIsFinished] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Estados dos dados
+    const [whatsappDono, setWhatsappDono] = useState('');
     const [nomeProfissional, setNomeProfissional] = useState('');
     const [nomeServico, setNomeServico] = useState('');
     const [duracaoServico, setDuracaoServico] = useState(30);
     const [valorServico, setValorServico] = useState(0);
 
-    interface Horario {
-        dia: string;
-        diaSemana: number;
-        disponivel: boolean;
-        inicio: string;
-        fim: string;
-    }
-
-    const [horarios, setHorarios] = useState<Horario[]>([
+    const [horarios, setHorarios] = useState([
         { dia: 'Segunda', diaSemana: 1, disponivel: true, inicio: '08:00', fim: '18:00' },
         { dia: 'Terça', diaSemana: 2, disponivel: true, inicio: '08:00', fim: '18:00' },
         { dia: 'Quarta', diaSemana: 3, disponivel: true, inicio: '08:00', fim: '18:00' },
@@ -41,8 +31,6 @@ const OnboardingWizard = () => {
         { dia: 'Sábado', diaSemana: 6, disponivel: false, inicio: '08:00', fim: '12:00' },
         { dia: 'Domingo', diaSemana: 0, disponivel: false, inicio: '09:00', fim: '18:00' },
     ]);
-
-    const [isLoading, setIsLoading] = useState(false);
 
     const handleHorarioChange = (diaSemana: number, campo: 'disponivel' | 'inicio' | 'fim', valor: string | boolean) => {
         setHorarios(horariosAtuais =>
@@ -54,8 +42,8 @@ const OnboardingWizard = () => {
         if (!usuario) return;
         setIsLoading(true);
 
-        // 1. Apenas marca onboarding como concluído (Nome e Slug já existem)
         const { error: profileError } = await updateProfile({
+            telefone: whatsappDono,
             has_completed_onboarding: true
         });
 
@@ -64,14 +52,13 @@ const OnboardingWizard = () => {
             return;
         }
 
-        // 2. Salvar Profissional
         const { data: professionalData, error: professionalError } = await supabase
             .from('profissionais')
             .insert({
                 usuario_id: usuario.id,
                 name: nomeProfissional,
                 email: usuario.email || '',
-                phone: ''
+                phone: whatsappDono
             })
             .select('id')
             .single();
@@ -81,8 +68,7 @@ const OnboardingWizard = () => {
             return;
         }
 
-        // 3. Salvar Serviço
-        const { error: serviceError } = await supabase.from('servicos').insert({
+        await supabase.from('servicos').insert({
             name: nomeServico,
             duration: duracaoServico,
             price: valorServico,
@@ -91,58 +77,30 @@ const OnboardingWizard = () => {
             active: true
         });
 
-        if (serviceError) {
-            setIsLoading(false);
-            return;
-        }
-
-        // 4. Salvar Horários
-        const { error: horariosError } = await supabase
-            .from('horarios_funcionamento')
-            .upsert(horarios.map(h => ({
+        await supabase.from('horarios_funcionamento').upsert(
+            horarios.map(h => ({
                 usuario_id: usuario.id,
                 dia_semana: h.diaSemana,
                 ativo: h.disponivel,
                 hora_inicio: h.inicio,
                 hora_fim: h.fim,
-            })), { onConflict: 'usuario_id, dia_semana' });
+            }))
+        );
 
         setIsLoading(false);
-        if (!horariosError) setIsFinished(true); // Abre a tela de sucesso
+        setIsFinished(true);
     };
 
-    // TELA FINAL DE SUCESSO
     if (isFinished) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-                <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl text-center">
-                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle2 size={40} />
+                <div className="w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-xl text-center border border-slate-100">
+                    <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                        <CheckCircle2 size={48} />
                     </div>
-                    <h2 className="text-2xl font-black text-gray-900 mb-4">Tudo pronto!</h2>
-                    <p className="text-gray-500 mb-8 font-medium">Sua conta foi configurada com sucesso. Agora você já pode começar a receber agendamentos.</p>
-                    
-                    <div className="space-y-4 mb-8 text-left">
-                        <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-2xl">
-                            <Bell className="text-blue-600 mt-1" size={20} />
-                            <div>
-                                <p className="text-sm font-bold text-blue-900">Ative as Notificações</p>
-                                <p className="text-xs text-blue-700">Lembre-se de permitir as notificações no seu navegador para não perder nenhum horário.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-2xl">
-                            <MessageCircle className="text-gray-600 mt-1" size={20} />
-                            <div>
-                                <p className="text-sm font-bold text-gray-900">Precisa de ajuda?</p>
-                                <p className="text-xs text-gray-500">Qualquer dúvida, basta clicar no botão de suporte no canto da tela.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button 
-                        onClick={() => window.location.reload()} 
-                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100"
-                    >
+                    <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tighter">Agenda Ativa! 🚀</h2>
+                    <p className="text-slate-500 mb-10 font-medium">Sua conta foi configurada. Fique de olho no WhatsApp para novos avisos!</p>
+                    <button onClick={() => window.location.reload()} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black shadow-xl shadow-blue-100 active:scale-95 transition-all">
                         Ir para o Dashboard
                     </button>
                 </div>
@@ -150,141 +108,102 @@ const OnboardingWizard = () => {
         );
     }
 
-    // PASSO 1: PROFISSIONAL
-    if (step === 1) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-                <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-black text-gray-900">Quem atende?</h2>
-                        <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase">Passo 1 de 3</span>
-                    </div>
-                    <p className="text-gray-500 mb-6 font-medium">Adicione o seu primeiro profissional. Pode ser você mesmo!</p>
-                    <div className="space-y-4">
-                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Profissional</label>
-                        <input 
-                            type="text" 
-                            value={nomeProfissional} 
-                            onChange={(e) => setNomeProfissional(e.target.value)}
-                            placeholder="Ex: Gezão"
-                            className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 transition-all font-medium"
-                        />
-                        <button 
-                            disabled={!nomeProfissional}
-                            onClick={() => setStep(2)}
-                            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100 disabled:bg-gray-200"
-                        >
-                            Próximo
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 font-sans text-slate-900">
+            <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100">
+                {/* CABEÇALHO COM STEPS */}
+                <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-2xl font-black tracking-tighter">
+                        {step === 1 && "Seu Contato"}
+                        {step === 2 && "Seu Serviço"}
+                        {step === 3 && "Sua Agenda"}
+                    </h2>
+                    <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase">
+                        Passo {step} de 3
+                    </span>
+                </div>
+
+                {/* PASSO 1: WHATSAPP E NOME */}
+                {step === 1 && (
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">WhatsApp de Alertas</label>
+                            <div className="relative">
+                                <Phone className="absolute left-4 top-4 text-slate-300" size={18} />
+                                <input type="tel" value={whatsappDono} onChange={(e) => setWhatsappDono(e.target.value)} placeholder="11999999999" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-bold" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome Profissional</label>
+                            <div className="relative">
+                                <User className="absolute left-4 top-4 text-slate-300" size={18} />
+                                <input type="text" value={nomeProfissional} onChange={(e) => setNomeProfissional(e.target.value)} placeholder="Ex: Gezão" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-bold" />
+                            </div>
+                        </div>
+                        <button disabled={!nomeProfissional || !whatsappDono} onClick={() => setStep(2)} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100 disabled:opacity-30 transition-all active:scale-95">
+                            Próximo Passo
                         </button>
                     </div>
-                </div>
-            </div>
-        );
-    }
+                )}
 
-    // PASSO 2: SERVIÇO
-    if (step === 2) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-                <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-black text-gray-900">Seu serviço</h2>
-                        <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase">Passo 2 de 3</span>
-                    </div>
-                    <div className="space-y-5">
+                {/* PASSO 2: SERVIÇO */}
+                {step === 2 && (
+                    <div className="space-y-6">
                         <div>
-                            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome do Serviço</label>
-                            <input 
-                                type="text" 
-                                value={nomeServico} 
-                                onChange={(e) => setNomeServico(e.target.value)}
-                                placeholder="Ex: Corte de Cabelo"
-                                className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-medium"
-                            />
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome do Serviço Principal</label>
+                            <input type="text" value={nomeServico} onChange={(e) => setNomeServico(e.target.value)} placeholder="Ex: Corte de Cabelo" className="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-bold" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Duração</label>
-                                <select 
-                                    value={duracaoServico} 
-                                    onChange={(e) => setDuracaoServico(Number(e.target.value))}
-                                    className="w-full p-4 bg-gray-50 border-none rounded-2xl font-medium"
-                                >
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Duração</label>
+                                <select value={duracaoServico} onChange={(e) => setDuracaoServico(Number(e.target.value))} className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold">
                                     <option value={30}>30 min</option>
                                     <option value={60}>1 hora</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Valor (R$)</label>
-                                <input 
-                                    type="number" 
-                                    value={valorServico} 
-                                    onChange={(e) => setValorServico(Number(e.target.value))}
-                                    className="w-full p-4 bg-gray-50 border-none rounded-2xl font-medium"
-                                />
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Preço (R$)</label>
+                                <input type="number" value={valorServico} onChange={(e) => setValorServico(Number(e.target.value))} className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold" />
                             </div>
                         </div>
-                        <div className="flex gap-3 pt-4">
-                            <button onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-bold">Voltar</button>
-                            <button 
-                                disabled={!nomeServico}
-                                onClick={() => setStep(3)}
-                                className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100"
-                            >
-                                Próximo
+                        <div className="flex gap-4">
+                            <button onClick={() => setStep(1)} className="flex-1 text-slate-400 font-bold">Voltar</button>
+                            <button disabled={!nomeServico} onClick={() => setStep(3)} className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100 transition-all active:scale-95">
+                                Próximo Passo
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        );
-    }
+                )}
 
-    // PASSO 3: HORÁRIOS
-    if (step === 3) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-                <div className="w-full max-w-lg bg-white rounded-3xl p-8 shadow-xl">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-black text-gray-900">Horários</h2>
-                        <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase">Passo 3 de 3</span>
-                    </div>
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide mb-6">
-                        {horarios.map((h) => (
-                            <div key={h.diaSemana} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                                <div className="flex items-center gap-3">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={h.disponivel} 
-                                        onChange={(e) => handleHorarioChange(h.diaSemana, 'disponivel', e.target.checked)}
-                                        className="w-5 h-5 rounded-lg border-none text-blue-600 focus:ring-0"
-                                    />
-                                    <span className="text-sm font-bold text-gray-700">{h.dia}</span>
+                {/* PASSO 3: HORÁRIOS */}
+                {step === 3 && (
+                    <div className="space-y-4">
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-hide">
+                            {horarios.map((h) => (
+                                <div key={h.diaSemana} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                                    <div className="flex items-center gap-3">
+                                        <input type="checkbox" checked={h.disponivel} onChange={(e) => handleHorarioChange(h.diaSemana, 'disponivel', e.target.checked)} className="w-5 h-5 rounded-lg border-none text-blue-600" />
+                                        <span className="text-sm font-black">{h.dia}</span>
+                                    </div>
+                                    <div className={`flex items-center gap-2 ${!h.disponivel && 'opacity-20'}`}>
+                                        <input type="time" value={h.inicio} className="bg-transparent border-none text-xs font-black w-12 p-0" />
+                                        <span className="text-[10px] font-black text-slate-300">ÁS</span>
+                                        <input type="time" value={h.fim} className="bg-transparent border-none text-xs font-black w-12 p-0" />
+                                    </div>
                                 </div>
-                                <div className={`flex items-center gap-2 ${!h.disponivel && 'opacity-30'}`}>
-                                    <input type="time" value={h.inicio} disabled={!h.disponivel} className="bg-transparent border-none text-xs font-bold text-gray-900 p-0 w-12" />
-                                    <span className="text-[10px] font-black text-gray-400 uppercase">às</span>
-                                    <input type="time" value={h.fim} disabled={!h.disponivel} className="bg-transparent border-none text-xs font-bold text-gray-900 p-0 w-12" />
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                        <div className="flex gap-4 pt-4">
+                            <button onClick={() => setStep(2)} className="flex-1 text-slate-400 font-bold">Voltar</button>
+                            <button onClick={handleSalvarTudo} disabled={isLoading} className="flex-[2] py-4 bg-green-600 text-white rounded-2xl font-black shadow-lg shadow-green-100 transition-all active:scale-95">
+                                {isLoading ? 'Configurando...' : 'Concluir Tudo'}
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex gap-3">
-                        <button onClick={() => setStep(2)} className="flex-1 py-4 text-gray-400 font-bold">Voltar</button>
-                        <button 
-                            onClick={handleSalvarTudo}
-                            disabled={isLoading}
-                            className="flex-[2] py-4 bg-green-600 text-white rounded-2xl font-black shadow-lg shadow-green-100 disabled:bg-gray-200"
-                        >
-                            {isLoading ? 'Salvando...' : 'Concluir Tudo'}
-                        </button>
-                    </div>
-                </div>
+                )}
             </div>
-        );
-    }
-
-    return null;
+        </div>
+    );
 };
 
 export default OnboardingWizard;
