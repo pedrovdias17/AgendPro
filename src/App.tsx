@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { initOneSignal, loginAndPrompt } from "./lib/onesignal"; 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 
@@ -29,13 +28,7 @@ function AdminArea() {
     const { user, usuario } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    useEffect(() => {
-        // Inicializa e vincula apenas UMA vez quando o perfil carregar
-        if (usuario?.id) {
-            initOneSignal();
-            loginAndPrompt(usuario.id);
-        }
-    }, [usuario?.id]);
+ [usuario?.id];
 
     if (user === undefined) return <div className="flex items-center justify-center h-screen font-bold">Carregando...</div>;
     if (user === null) return <Login />;
