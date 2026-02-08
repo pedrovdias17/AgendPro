@@ -62,7 +62,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
       
       /* Lógica do Desktop: */
       md:translate-x-0 /* Sempre visível no desktop */
-      ${isOpen ? 'md:w-64' : 'md:w-32'} /* Lógica de 'abrir/fechar' só no desktop */
+      ${isOpen ? 'md:w-48' : 'md:w-32'} /* Lógica de 'abrir/fechar' só no desktop */
     `}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
