@@ -11,7 +11,6 @@ import {
     Plus, 
     Copy,
     ExternalLink,
-    Bell // Adicionado para o banner de notificação
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { loginAndPrompt } from '../lib/onesignal'; // Importando a função que criamos
@@ -108,27 +107,6 @@ export default function Dashboard() {
                         {isResending ? 'Enviando...' : 'Reenviar link'}
                     </button>
                     {resendMessage && <p className="mt-1 text-xs font-medium">{resendMessage}</p>}
-                </div>
-            )}
-
-            {/* <<< NOVO: BANNER DE ATIVAÇÃO DE NOTIFICAÇÕES >>> */}
-            {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 flex flex-col sm:flex-row justify-between items-center rounded-r-lg shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="flex items-center mb-4 sm:mb-0">
-                        <div className="bg-blue-100 p-2 rounded-full mr-3">
-                            <Bell size={20} className="text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="font-bold text-blue-900 text-sm sm:text-base">Ativar avisos de agendamento?</p>
-                            <p className="text-xs sm:text-sm text-blue-700">Receba notificações instantâneas no seu celular.</p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={() => usuario?.id && loginAndPrompt(usuario.id)}
-                        className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-md active:scale-95"
-                    >
-                        ATIVAR AGORA
-                    </button>
                 </div>
             )}
 

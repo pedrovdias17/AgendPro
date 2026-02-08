@@ -28,11 +28,6 @@ export default function Upgrade() {
       description: 'Seus clientes podem agendar a qualquer hora, mesmo quando você está dormindo'
     },
     {
-      icon: DollarSign,
-      title: 'Pagamento de Sinal Automático',
-      description: 'Receba sinais via Pix/Cartão e elimine os no-shows definitivamente'
-    },
-    {
       icon: Bell,
       title: 'Lembretes Automáticos',
       description: 'Notificações automáticas por e-mail para lembrar seus clientes dos agendamentos'
@@ -177,12 +172,6 @@ export default function Upgrade() {
                   {isProcessing ? 'Processando...' : 'Assinar Agora'}
                 </button>
                 <p className="text-xs text-gray-500 mt-4"> Pagamento seguro • SSL 256-bit </p>
-              </div>
-              <div className="border-t border-gray-100 pt-6">
-                <h4 className="font-semibold text-gray-900 mb-3">Garantia de 30 dias</h4>
-                <p className="text-sm text-gray-600">
-                  Se não ficar satisfeito, devolvemos 100% do seu dinheiro. Sem perguntas, sem complicações.
-                </p>
               </div>
             </div>
           </div>

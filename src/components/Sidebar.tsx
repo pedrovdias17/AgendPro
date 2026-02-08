@@ -41,7 +41,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     };
 
     const handleWhatsApp = () => {
-        window.open('https://wa.me/5511999999999?text=Olá! Preciso de ajuda com o Beauty Agenda', '_blank');
+        window.open('https://wa.me/551299719151?text=Olá! Preciso de ajuda com o AgendPro', '_blank');
     };
 
     // <<< 1. FUNÇÃO DE NAVEGAÇÃO QUE FECHA A GAVETA
@@ -62,7 +62,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
       
       /* Lógica do Desktop: */
       md:translate-x-0 /* Sempre visível no desktop */
-      ${isOpen ? 'md:w-64' : 'md:w-16'} /* Lógica de 'abrir/fechar' só no desktop */
+      ${isOpen ? 'md:w-64' : 'md:w-32'} /* Lógica de 'abrir/fechar' só no desktop */
     `}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
