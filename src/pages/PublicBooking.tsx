@@ -48,59 +48,47 @@ export default function PublicBooking() {
 
   // 1. Busca dados iniciais do estúdio
   useEffect(() => {
-    if (!slug) return;
+  if (!slug) return;
 
-    const fetchStudioData = async () => {
-      setIsLoading(true);
-      
-      const { data: owner, error: ownerError } = await supabase
-        .from('usuarios')
-        .select('id, nome_do_negocio, endereco, telefone')
-        .eq('slug', slug)
-        .single();
+  const fetchStudioData = async () => {
+    setIsLoading(true);
+    
+    const { data: owner, error: ownerError } = await supabase
+      .from('usuarios')
+      .select('id, nome_do_negocio, endereco, telefone, configuracoes')
+      .eq('slug', slug)
+      .single();
 
-      if (ownerError || !owner) {
-        setIsLoading(false);
-        return;
-      }
-
-      setOwnerId(owner.id);
-      setStudioInfo({
-        name: owner.nome_do_negocio,
-        address: owner.endereco || 'Endereço não informado',
-        phone: owner.telefone || ''
-      });
-
-      const { data: hoursData } = await supabase
-        .from('horarios_funcionamento')
-        .select('*')
-        .eq('usuario_id', owner.id);
-
-      if (hoursData) {
-        const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const formattedHours: WorkingHours = {};
-        hoursData.forEach(h => {
-          formattedHours[dayMap[h.dia_semana]] = {
-            enabled: h.ativo,
-            start: h.hora_inicio,
-            end: h.hora_fim
-          };
-        });
-        setWorkingHours(formattedHours);
-      }
-
-      const { data: servicesData } = await supabase
-        .from('servicos')
-        .select('*')
-        .eq('usuario_id', owner.id)
-        .eq('active', true);
-        
-      setServices(servicesData || []);
+    if (ownerError || !owner) {
       setIsLoading(false);
-    };
+      return;
+    }
 
-    fetchStudioData();
-  }, [slug]);
+    setOwnerId(owner.id);
+    setStudioInfo({
+      name: owner.nome_do_negocio,
+      address: owner.endereco || 'Endereço não informado',
+      phone: owner.telefone || ''
+    });
+
+    // LEITURA DIRETA DO JSON
+    // Se o Supabase já entrega como objeto, é só acessar direto:
+    if (owner.configuracoes?.workingHours) {
+      setWorkingHours(owner.configuracoes.workingHours);
+    }
+
+    const { data: servicesData } = await supabase
+      .from('servicos')
+      .select('*')
+      .eq('usuario_id', owner.id)
+      .eq('active', true);
+      
+    setServices(servicesData || []);
+    setIsLoading(false);
+  };
+
+  fetchStudioData();
+}, [slug]);
 
   // 2. Busca horários ocupados com correção de segundos
   useEffect(() => {
@@ -115,7 +103,6 @@ export default function PublicBooking() {
         .neq('status', 'cancelled');
 
       if (data) {
-        // Cortamos "08:00:00" para "08:00" para bater com a lista gerada
         setBusySlots(data.map(a => a.hora_agendamento.slice(0, 5)));
       }
     };
@@ -125,11 +112,11 @@ export default function PublicBooking() {
 
   const selectedServiceData = services.find(s => s.id === selectedService);
 
-  // 3. Gera TODOS os horários possíveis (sem filtrar os ocupados aqui)
   const timeSlots = useMemo(() => {
     if (!selectedServiceData || !selectedDate || !workingHours) return [];
     
-    const dateObj = new Date(`${selectedDate}T00:00:00`);
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
     const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayKey = dayMap[dateObj.getDay()];
     const daySchedule = workingHours[dayKey];
@@ -244,27 +231,38 @@ export default function PublicBooking() {
             <div className="bg-white p-6 rounded-3xl shadow-sm">
               <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold mb-6" />
               {selectedDate && (
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map(t => {
-                    const isBusy = busySlots.includes(t); // Verifica se o horário está ocupado
-                    return (
-                      <button 
-                        key={t} 
-                        disabled={isBusy} // Bloqueia o clique se estiver ocupado
-                        onClick={() => { setSelectedTime(t); setStep(4); }} 
-                        className={`p-3 rounded-xl text-xs font-bold transition-all ${
-                          isBusy 
-                            ? 'bg-gray-100 text-gray-300 cursor-not-allowed border-none' // Estilo de ocupado
-                            : 'bg-gray-50 text-gray-700 hover:bg-blue-600 hover:text-white'
-                        }`}
-                      >
-                        {t}
-                        {isBusy && <span className="block text-[8px] opacity-40">Ocupado</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+  <div className="mt-6">
+    {timeSlots.length > 0 ? (
+      <div className="grid grid-cols-3 gap-2">
+        {timeSlots.map(t => {
+          const isBusy = busySlots.includes(t);
+          return (
+            <button 
+              key={t} 
+              disabled={isBusy}
+              onClick={() => { setSelectedTime(t); setStep(4); }} 
+              className={`p-3 rounded-xl text-xs font-bold transition-all ${
+                isBusy 
+                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed border-none'
+                  : 'bg-gray-50 text-gray-700 hover:bg-blue-600 hover:text-white'
+              }`}
+            >
+              {t}
+              {isBusy && <span className="block text-[8px] opacity-40 uppercase">Ocupado</span>}
+            </button>
+          );
+        })}
+      </div>
+    ) : (
+      /* MENSAGEM DE DIA FECHADO */
+      <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 text-center">
+        <Calendar className="mx-auto text-amber-500 mb-2" size={24} />
+        <p className="text-amber-800 font-bold text-sm">Não atendemos neste dia.</p>
+        <p className="text-amber-600 text-xs mt-1">Por favor, selecione outra data.</p>
+      </div>
+    )}
+  </div>
+)}
             </div>
             <button onClick={() => setStep(1)} className="w-full text-gray-400 font-bold">Voltar</button>
           </div>
