@@ -65,14 +65,14 @@ export default function Settings() {
         customUrl: usuario.slug || '',
         workingHours: usuario.configuracoes?.workingHours || prev.workingHours,
         blockedDates: usuario.configuracoes?.blockedDates || [],
-        paymentKey: '',
+        paymentKey: '', 
         bookingSettings: usuario.configuracoes?.bookingSettings || prev.bookingSettings,
       }));
-      setIsDirty(false); // Reseta o estado ao carregar do banco
+      setIsDirty(false); // Reseta o estado ao carregar dados oficiais
     }
   }, [usuario]);
 
-  const fullPublicUrl = `https://agend-pro.com/booking/${settings.customUrl}`;
+  const fullPublicUrl = `https://agend-pro.vercel.app/booking/${settings.customUrl}`;
 
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: User },
@@ -80,7 +80,6 @@ export default function Settings() {
     { id: 'blockedTimes', label: 'Bloqueios de Horário', icon: Clock },
     { id: 'payments', label: 'Pagamentos', icon: CreditCard },
     { id: 'public', label: 'Página Pública', icon: Globe },
-    { id: 'legal', label: 'Termos e Privacidade', icon: FileText }
   ];
 
   const handleSave = async () => {
@@ -89,13 +88,7 @@ export default function Settings() {
     setMessage(null);
 
     try {
-      if (settings.paymentKey) {
-        await supabase.functions.invoke('save-secret', {
-          body: { name: `mercado_pago_key_${usuario.id}`, secret: settings.paymentKey }
-        });
-      }
-
-      // CORREÇÃO: Usando 'nome_do_negocio' para bater com o banco e o PublicBooking
+      // Sincronização: Usando 'nome_do_negocio' para bater com o banco
       const profileDataToUpdate = {
         nome_do_negocio: settings.studioName, 
         nome: settings.ownerName,
@@ -114,8 +107,7 @@ export default function Settings() {
       if (!result.success) throw new Error(result.error || 'Erro ao salvar perfil.');
 
       setMessage({ type: 'success', text: 'Configurações salvas com sucesso!' });
-      setSettings(prev => ({ ...prev, paymentKey: '' }));
-      setIsDirty(false); // Sucesso! Removemos o aviso de pendência
+      setIsDirty(false); // Sucesso! O aviso some
 
     } catch (error: any) {
       setMessage({ type: 'error', text: `Erro: ${error.message}` });
@@ -136,34 +128,6 @@ export default function Settings() {
     { id: 'friday', label: 'Sexta-feira' }, { id: 'saturday', label: 'Sábado' },
     { id: 'sunday', label: 'Domingo' }
   ];
-
-  const addBreak = (dayId: string) => {
-    setSettings(prev => ({
-      ...prev,
-      workingHours: {
-        ...prev.workingHours,
-        [dayId]: {
-          ...prev.workingHours[dayId as keyof typeof prev.workingHours],
-          breaks: [...(prev.workingHours[dayId as keyof typeof prev.workingHours].breaks || []), { start: '12:00', end: '13:00' }]
-        }
-      }
-    }));
-    setIsDirty(true);
-  };
-
-  const removeBreak = (dayId: string, breakIndex: number) => {
-    setSettings(prev => ({
-      ...prev,
-      workingHours: {
-        ...prev.workingHours,
-        [dayId]: {
-          ...prev.workingHours[dayId as keyof typeof prev.workingHours],
-          breaks: (prev.workingHours[dayId as keyof typeof prev.workingHours].breaks || []).filter((_, i) => i !== breakIndex)
-        }
-      }
-    }));
-    setIsDirty(true);
-  };
 
   const copyScheduleToOtherDays = (sourceDay: string) => {
     const sourceSchedule = settings.workingHours[sourceDay as keyof typeof settings.workingHours];
@@ -274,6 +238,54 @@ export default function Settings() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {activeTab === 'blockedTimes' && (
+              <div className="space-y-6">
+                <h3 className="font-bold text-gray-900">Bloqueios de Horário</h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="date" value={newBlockDate} onChange={(e) => setNewBlockDate(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                    <input type="text" placeholder="Motivo (ex: Feriado)" value={newBlockReason} onChange={(e) => setNewBlockReason(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg"/>
+                    <button onClick={() => { handleAddBlock(newBlockDate, newBlockReason); setNewBlockDate(''); setNewBlockReason(''); }} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center space-x-2">
+                      <Plus size={18} /> <span>Adicionar</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {settings.blockedDates.map((block, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <p className="font-medium text-gray-900">{new Date(block.date).toLocaleDateString('pt-BR')} {block.motivo && `- ${block.motivo}`}</p>
+                      <button onClick={() => { setSettings(prev => ({ ...prev, blockedDates: prev.blockedDates.filter((_, i) => i !== index) })); setIsDirty(true); }} className="text-red-500 hover:bg-red-50 p-2 rounded-lg"><Trash2 size={18}/></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'payments' && (
+              <div className="flex flex-col items-center justify-center text-center p-10 bg-gray-50 rounded-lg h-[400px]">
+                <div className="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full inline-block mb-4">
+                  <Sparkles size={32} className="text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Pix Automático e Mais em Breve</h3>
+                <p className="text-gray-600 max-w-md">Estamos trabalhando em integrações de pagamento robustas para facilitar o seu dia a dia.</p>
+              </div>
+            )}
+
+            {activeTab === 'public' && (
+              <div className="space-y-6">
+                <h3 className="font-bold text-gray-900 text-lg">Sua Página Pública</h3>
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input type="text" readOnly value={fullPublicUrl} className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-mono"/>
+                    <button onClick={() => copyToClipboard(fullPublicUrl)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Copy size={20}/></button>
+                  </div>
+                  <a href={fullPublicUrl} target="_blank" rel="noreferrer" className="inline-flex items-center space-x-2 text-blue-600 font-bold hover:underline">
+                    <span>Visualizar página agora</span> <ExternalLink size={16}/>
+                  </a>
+                </div>
               </div>
             )}
           </div>
